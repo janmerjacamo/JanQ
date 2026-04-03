@@ -2,65 +2,68 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>JanQ ERP - Plataforma de Gestión</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JanQ ERP - Acceso</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 40px 20px;
+            padding: 20px;
         }
-        .login-container {
-            width: 100%;
-            max-width: 480px;
+        .login-card {
             background: white;
             border-radius: 32px;
-            overflow-y: auto;
-            max-height: 90vh;
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
         }
         .login-header {
-            background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+            background: #1E293B;
             padding: 40px 30px;
             text-align: center;
         }
-        .logo-icon {
-            width: 70px;
-            height: 70px;
-            background: rgba(16,185,129,0.15);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
+        .login-header i {
+            font-size: 48px;
+            color: #10B981;
+            margin-bottom: 15px;
         }
-        .logo-icon i { font-size: 36px; color: #10B981; }
-        .login-header h1 { font-size: 28px; color: white; }
-        .login-header p { font-size: 14px; color: #94A3B8; margin-top: 8px; }
-        .login-body { padding: 30px; }
-        .form-group { margin-bottom: 24px; }
-        .form-group label { font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 8px; display: block; }
-        .input-group { position: relative; }
-        .input-group i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
+        .login-header h1 {
+            color: white;
+            font-size: 28px;
+        }
+        .login-header p {
             color: #94A3B8;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .login-body {
+            padding: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 8px;
         }
         .form-group input {
             width: 100%;
-            padding: 14px 15px 14px 45px;
+            padding: 14px 16px;
             border: 1.5px solid #E2E8F0;
             border-radius: 14px;
             font-size: 14px;
+            font-family: 'Inter', sans-serif;
         }
         .form-group input:focus {
             outline: none;
@@ -74,16 +77,22 @@
             border: none;
             border-radius: 14px;
             font-weight: 600;
+            font-size: 15px;
             cursor: pointer;
+            margin-top: 10px;
         }
-        .alert {
-            padding: 14px;
+        .btn-login:hover {
+            background: #059669;
+        }
+        .error-msg {
+            background: #FEF2F2;
+            color: #DC2626;
+            padding: 12px;
             border-radius: 12px;
-            margin-bottom: 20px;
             font-size: 13px;
+            margin-bottom: 20px;
+            border-left: 3px solid #DC2626;
         }
-        .alert-error { background: #FEF2F2; color: #DC2626; border-left: 3px solid #DC2626; }
-        .alert-success { background: #ECFDF5; color: #10B981; border-left: 3px solid #10B981; }
         .demo-info {
             margin-top: 24px;
             padding: 16px;
@@ -96,104 +105,67 @@
     </style>
 </head>
 <body>
-    <div class="login-container">
+    <div class="login-card">
         <div class="login-header">
-            <div class="logo-icon"><i class="fas fa-chart-line"></i></div>
+            <i class="fas fa-chart-line"></i>
             <h1>JanQ ERP</h1>
-            <p>Plataforma integral de gestión empresarial</p>
+            <p>Plataforma de gestión empresarial</p>
         </div>
         <div class="login-body">
-            <div id="alertMsg"></div>
+            <div id="errorMsg"></div>
             <form id="loginForm">
                 <div class="form-group">
                     <label>Correo electrónico</label>
-                    <div class="input-group">
-                        <i class="fas fa-envelope"></i>
-                        <input type="email" id="email" placeholder="tu@empresa.com" required>
-                    </div>
+                    <input type="email" id="email" placeholder="tu@empresa.com" required>
                 </div>
                 <div class="form-group">
                     <label>Contraseña</label>
-                    <div class="input-group">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
-                    </div>
+                    <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
                 </div>
-                <button type="submit" class="btn-login">Acceder al sistema</button>
+                <button type="submit" class="btn-login">Ingresar</button>
             </form>
             <div class="demo-info">
-                <i class="fas fa-info-circle"></i> Usuario: janmerfjq@gmail.com / 18902748
+                <i class="fas fa-info-circle"></i> Credenciales: janmerfjq@gmail.com / 18902748
             </div>
         </div>
     </div>
-    <script src="db.js"></script>
+
     <script>
-        // Crear usuario por defecto
-        if (!localStorage.getItem('janq_users')) {
-            // Crear empresa por defecto
-            const companies = {};
-            const companyId = 'comp_' + Date.now();
-            companies[companyId] = {
-                id: companyId,
-                name: 'JanQ Demo',
-                plan: 'enterprise',
-                modules: ['ventas', 'inventario', 'clientes', 'proveedores', 'compras', 'caja', 'reportes'],
-                createdAt: new Date().toISOString(),
-                active: true
-            };
-            localStorage.setItem('janq_companies', JSON.stringify(companies));
-            
-            // Crear usuario super admin
-            const users = {
-                'janmerfjq@gmail.com': {
-                    email: 'janmerfjq@gmail.com',
-                    password: '18902748',
-                    name: 'Janmer Jacamo',
-                    role: 'super_admin',
-                    companyId: companyId,
-                    modules: ['ventas', 'inventario', 'clientes', 'proveedores', 'compras', 'caja', 'reportes'],
-                    createdAt: new Date().toISOString(),
-                    active: true
-                }
-            };
-            localStorage.setItem('janq_users', JSON.stringify(users));
-            console.log('Usuario creado: janmerfjq@gmail.com / 18902748');
-        }
+        // Usuario por defecto
+        const USUARIO_VALIDO = {
+            email: 'janmerfjq@gmail.com',
+            password: '18902748',
+            name: 'Janmer Jacamo',
+            role: 'admin'
+        };
         
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             
-            const users = JSON.parse(localStorage.getItem('janq_users')) || {};
-            const user = users[email];
-            
-            if (user && user.password === password && user.active) {
-                const session = { 
-                    email: user.email, 
-                    name: user.name, 
-                    role: user.role, 
-                    companyId: user.companyId 
+            if (email === USUARIO_VALIDO.email && password === USUARIO_VALIDO.password) {
+                // Guardar sesión
+                const session = {
+                    email: USUARIO_VALIDO.email,
+                    name: USUARIO_VALIDO.name,
+                    role: USUARIO_VALIDO.role
                 };
                 localStorage.setItem('janq_session', JSON.stringify(session));
-                
-                if (user.role === 'super_admin') {
-                    window.location.href = 'admin.html';
-                } else {
-                    window.location.href = 'dashboard.html';
-                }
+                window.location.href = 'dashboard.html';
             } else {
-                const alertDiv = document.getElementById('alertMsg');
-                alertDiv.innerHTML = '<div class="alert alert-error">Correo o contraseña incorrectos</div>';
-                setTimeout(() => alertDiv.innerHTML = '', 3000);
+                document.getElementById('errorMsg').innerHTML = '<div class="error-msg">Correo o contraseña incorrectos</div>';
+                setTimeout(() => {
+                    document.getElementById('errorMsg').innerHTML = '';
+                }, 3000);
             }
         });
         
-        // Redirigir si ya hay sesión
-        const session = JSON.parse(localStorage.getItem('janq_session'));
+        // Si ya hay sesión, ir al dashboard
+        const session = localStorage.getItem('janq_session');
         if (session) {
-            if (session.role === 'super_admin') window.location.href = 'admin.html';
-            else window.location.href = 'dashboard.html';
+            window.location.href = 'dashboard.html';
         }
     </script>
 </body>
