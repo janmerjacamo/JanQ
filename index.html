@@ -17,7 +17,6 @@
             justify-content: center;
             padding: 40px 20px;
         }
-        
         .login-container {
             width: 100%;
             max-width: 480px;
@@ -26,30 +25,12 @@
             overflow-y: auto;
             max-height: 90vh;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-            position: relative;
-            z-index: 1;
         }
-        
-        /* Scroll personalizado */
-        .login-container::-webkit-scrollbar {
-            width: 6px;
-        }
-        .login-container::-webkit-scrollbar-track {
-            background: #F1F5F9;
-            border-radius: 3px;
-        }
-        .login-container::-webkit-scrollbar-thumb {
-            background: #10B981;
-            border-radius: 3px;
-        }
-        
         .login-header {
             background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
             padding: 40px 30px;
             text-align: center;
-            position: relative;
         }
-        
         .logo-icon {
             width: 70px;
             height: 70px;
@@ -59,100 +40,32 @@
             align-items: center;
             justify-content: center;
             margin: 0 auto 20px;
-            border: 1px solid rgba(16,185,129,0.3);
         }
-        
         .logo-icon i { font-size: 36px; color: #10B981; }
-        
-        .login-header h1 {
-            font-size: 28px;
-            font-weight: 700;
-            color: white;
-            letter-spacing: -0.5px;
-        }
-        
-        .login-header p {
-            font-size: 14px;
-            color: #94A3B8;
-            margin-top: 8px;
-        }
-        
-        .tabs {
-            display: flex;
-            background: #F8FAFC;
-            padding: 6px;
-            margin: -20px 20px 0 20px;
-            border-radius: 16px;
-            position: relative;
-            z-index: 2;
-            gap: 6px;
-        }
-        
-        .tab-btn {
-            flex: 1;
-            padding: 14px;
-            background: transparent;
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s;
-            color: #64748B;
-        }
-        
-        .tab-btn.active {
-            background: white;
-            color: #10B981;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        
-        .login-body {
-            padding: 30px;
-        }
-        
-        .form-group {
-            margin-bottom: 24px;
-        }
-        
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            color: #475569;
-            margin-bottom: 8px;
-        }
-        
-        .input-group {
-            position: relative;
-        }
-        
+        .login-header h1 { font-size: 28px; color: white; }
+        .login-header p { font-size: 14px; color: #94A3B8; margin-top: 8px; }
+        .login-body { padding: 30px; }
+        .form-group { margin-bottom: 24px; }
+        .form-group label { font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 8px; display: block; }
+        .input-group { position: relative; }
         .input-group i {
             position: absolute;
             left: 15px;
             top: 50%;
             transform: translateY(-50%);
             color: #94A3B8;
-            font-size: 16px;
         }
-        
         .form-group input {
             width: 100%;
             padding: 14px 15px 14px 45px;
             border: 1.5px solid #E2E8F0;
             border-radius: 14px;
-            font-family: 'Inter', sans-serif;
             font-size: 14px;
-            transition: all 0.2s;
-            background: white;
         }
-        
         .form-group input:focus {
             outline: none;
             border-color: #10B981;
-            box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
         }
-        
         .btn-login {
             width: 100%;
             padding: 14px;
@@ -161,36 +74,16 @@
             border: none;
             border-radius: 14px;
             font-weight: 600;
-            font-size: 15px;
             cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 10px;
         }
-        
-        .btn-login:hover { background: #059669; transform: translateY(-1px); }
-        
         .alert {
             padding: 14px;
             border-radius: 12px;
             margin-bottom: 20px;
             font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
-        
-        .alert-error {
-            background: #FEF2F2;
-            color: #DC2626;
-            border-left: 3px solid #DC2626;
-        }
-        
-        .alert-success {
-            background: #ECFDF5;
-            color: #10B981;
-            border-left: 3px solid #10B981;
-        }
-        
+        .alert-error { background: #FEF2F2; color: #DC2626; border-left: 3px solid #DC2626; }
+        .alert-success { background: #ECFDF5; color: #10B981; border-left: 3px solid #10B981; }
         .demo-info {
             margin-top: 24px;
             padding: 16px;
@@ -200,215 +93,75 @@
             font-size: 12px;
             color: #64748B;
         }
-        
-        .demo-info i { color: #10B981; margin-right: 5px; }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .tab-content {
-            animation: fadeIn 0.3s ease;
-        }
-        
-        /* Responsive */
-        @media (max-width: 500px) {
-            body { padding: 20px 16px; }
-            .login-header { padding: 30px 20px; }
-            .login-body { padding: 24px 20px; }
-            .logo-icon { width: 55px; height: 55px; }
-            .logo-icon i { font-size: 28px; }
-            .login-header h1 { font-size: 24px; }
-        }
     </style>
 </head>
 <body>
     <div class="login-container">
         <div class="login-header">
-            <div class="logo-icon">
-                <i class="fas fa-chart-line"></i>
-            </div>
+            <div class="logo-icon"><i class="fas fa-chart-line"></i></div>
             <h1>JanQ ERP</h1>
             <p>Plataforma integral de gestión empresarial</p>
         </div>
-        
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('login')">Iniciar sesión</button>
-            <button class="tab-btn" onclick="switchTab('register')">Crear cuenta</button>
-        </div>
-        
         <div class="login-body">
             <div id="alertMsg"></div>
-            
-            <!-- Login Tab -->
-            <div id="loginTab" class="tab-content">
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label>Correo electrónico</label>
-                        <div class="input-group">
-                            <i class="fas fa-envelope"></i>
-                            <input type="email" id="loginEmail" placeholder="tu@empresa.com" required>
-                        </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Correo electrónico</label>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" placeholder="tu@empresa.com" required>
                     </div>
-                    <div class="form-group">
-                        <label>Contraseña</label>
-                        <div class="input-group">
-                            <i class="fas fa-lock"></i>
-                            <input type="password" id="loginPassword" placeholder="Ingresa tu contraseña" required>
-                        </div>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
                     </div>
-                    <button type="submit" class="btn-login">Acceder al sistema</button>
-                </form>
-            </div>
-            
-            <!-- Register Tab -->
-            <div id="registerTab" class="tab-content" style="display:none;">
-                <form id="registerForm">
-                    <div class="form-group">
-                        <label>Nombre completo</label>
-                        <div class="input-group">
-                            <i class="fas fa-user"></i>
-                            <input type="text" id="regName" placeholder="Juan Pérez" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Correo electrónico</label>
-                        <div class="input-group">
-                            <i class="fas fa-envelope"></i>
-                            <input type="email" id="regEmail" placeholder="tu@empresa.com" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Contraseña</label>
-                        <div class="input-group">
-                            <i class="fas fa-lock"></i>
-                            <input type="password" id="regPassword" placeholder="Mínimo 6 caracteres" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Confirmar contraseña</label>
-                        <div class="input-group">
-                            <i class="fas fa-check-circle"></i>
-                            <input type="password" id="regConfirmPassword" placeholder="Repite tu contraseña" required>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-login">Crear cuenta gratuita</button>
-                </form>
-            </div>
-            
+                </div>
+                <button type="submit" class="btn-login">Acceder al sistema</button>
+            </form>
             <div class="demo-info">
-                <i class="fas fa-info-circle"></i> Usuario demo: <strong>admin@janq.com</strong> / <strong>admin123</strong>
+                <i class="fas fa-info-circle"></i> Admin: admin@janq.com / admin123
             </div>
         </div>
     </div>
-
+    <script src="db.js"></script>
     <script>
-        // Inicializar usuarios
-        if (!localStorage.getItem('janq_users')) {
-            const users = {
-                'admin@janq.com': { password: 'admin123', name: 'Administrador', role: 'admin', createdAt: new Date().toISOString() }
-            };
-            localStorage.setItem('janq_users', JSON.stringify(users));
+        // Crear super admin si no existe
+        const users = JSON.parse(localStorage.getItem('janq_users')) || {};
+        if (!users['admin@janq.com']) {
+            janqAdmin.createUser('admin@janq.com', 'admin123', 'Super Administrador', 'super_admin', 'super_admin');
         }
         
-        function switchTab(tab) {
-            const loginTab = document.getElementById('loginTab');
-            const registerTab = document.getElementById('registerTab');
-            const tabs = document.querySelectorAll('.tab-btn');
-            
-            if (tab === 'login') {
-                loginTab.style.display = 'block';
-                registerTab.style.display = 'none';
-                tabs[0].classList.add('active');
-                tabs[1].classList.remove('active');
-            } else {
-                loginTab.style.display = 'none';
-                registerTab.style.display = 'block';
-                tabs[0].classList.remove('active');
-                tabs[1].classList.add('active');
-            }
-            document.getElementById('alertMsg').innerHTML = '';
-        }
-        
-        function showAlert(message, type) {
-            const alertDiv = document.getElementById('alertMsg');
-            alertDiv.innerHTML = `<div class="alert alert-${type}"><i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i> ${message}</div>`;
-            setTimeout(() => { alertDiv.innerHTML = ''; }, 5000);
-        }
-        
-        // Login
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            const users = JSON.parse(localStorage.getItem('janq_users'));
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
             
-            if (users[email] && users[email].password === password) {
-                const session = { email, name: users[email].name, role: users[email].role };
+            const user = janqAdmin.authenticate(email, password);
+            
+            if (user) {
+                const session = { email: user.email, name: user.name, role: user.role, companyId: user.companyId };
                 localStorage.setItem('janq_session', JSON.stringify(session));
-                showAlert('Inicio de sesión exitoso. Redirigiendo...', 'success');
-                setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+                
+                if (user.role === 'super_admin') {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = 'dashboard.html';
+                }
             } else {
-                showAlert('Correo o contraseña incorrectos', 'error');
+                const alertDiv = document.getElementById('alertMsg');
+                alertDiv.innerHTML = '<div class="alert alert-error">Correo o contraseña incorrectos</div>';
+                setTimeout(() => alertDiv.innerHTML = '', 3000);
             }
         });
         
-        // Registro
-        document.getElementById('registerForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('regName').value.trim();
-            const email = document.getElementById('regEmail').value.trim();
-            const password = document.getElementById('regPassword').value;
-            const confirm = document.getElementById('regConfirmPassword').value;
-            
-            if (!name || !email || !password) {
-                showAlert('Todos los campos son obligatorios', 'error');
-                return;
-            }
-            
-            if (password !== confirm) {
-                showAlert('Las contraseñas no coinciden', 'error');
-                return;
-            }
-            
-            if (password.length < 6) {
-                showAlert('La contraseña debe tener al menos 6 caracteres', 'error');
-                return;
-            }
-            
-            const users = JSON.parse(localStorage.getItem('janq_users'));
-            if (users[email]) {
-                showAlert('Este correo ya está registrado', 'error');
-                return;
-            }
-            
-            users[email] = {
-                password: password,
-                name: name,
-                role: 'user',
-                createdAt: new Date().toISOString()
-            };
-            localStorage.setItem('janq_users', JSON.stringify(users));
-            
-            showAlert('Cuenta creada exitosamente. Ahora puedes iniciar sesión.', 'success');
-            
-            // Limpiar formulario
-            document.getElementById('regName').value = '';
-            document.getElementById('regEmail').value = '';
-            document.getElementById('regPassword').value = '';
-            document.getElementById('regConfirmPassword').value = '';
-            
-            // Cambiar a login
-            setTimeout(() => switchTab('login'), 1500);
-        });
-        
-        // Redirigir si ya hay sesión
         if (localStorage.getItem('janq_session')) {
-            window.location.href = 'dashboard.html';
+            const session = JSON.parse(localStorage.getItem('janq_session'));
+            if (session.role === 'super_admin') window.location.href = 'admin.html';
+            else window.location.href = 'dashboard.html';
         }
-        
-        window.switchTab = switchTab;
     </script>
 </body>
 </html>

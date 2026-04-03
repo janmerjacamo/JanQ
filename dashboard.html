@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JanQ - Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -22,14 +22,8 @@
         .logo { display: flex; align-items: center; gap: 12px; }
         .logo i { font-size: 28px; color: #10B981; }
         .logo h1 { font-size: 22px; }
-        .user-info { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-        .plan-badge {
-            background: #10B981;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
+        .company-name { background: #10B981; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+        .user-info { display: flex; align-items: center; gap: 20px; }
         .logout-btn {
             background: rgba(255,255,255,0.1);
             border: none;
@@ -59,7 +53,6 @@
         .nav-item:hover { background: #F1F5F9; color: #10B981; }
         .nav-item.active { background: #ECFDF5; color: #10B981; }
         .nav-item i { width: 24px; }
-        .nav-item.disabled { opacity: 0.5; cursor: not-allowed; background: none; }
         .content { flex: 1; padding: 24px 32px; background: #F8FAFC; }
         .module-pane { display: none; }
         .module-pane.active { display: block; }
@@ -75,7 +68,6 @@
         .stat-card { background: white; padding: 20px; border-radius: 16px; border: 1px solid #E2E8F0; }
         .stat-card i { font-size: 32px; color: #10B981; margin-bottom: 10px; }
         .stat-card h3 { font-size: 28px; font-weight: 700; }
-        .welcome-card { background: white; border-radius: 16px; padding: 30px; text-align: center; border: 1px solid #E2E8F0; }
         @media (max-width: 900px) {
             .sidebar { width: 80px; }
             .nav-item span:last-child { display: none; }
@@ -87,7 +79,7 @@
     <div class="header">
         <div class="logo"><i class="fas fa-chart-line"></i><h1>JanQ ERP</h1></div>
         <div class="user-info">
-            <span class="plan-badge" id="userPlan">Cargando...</span>
+            <span class="company-name" id="companyName">Cargando...</span>
             <span id="userName">Cargando...</span>
             <button class="logout-btn" id="logoutBtn">Salir</button>
         </div>
@@ -97,57 +89,49 @@
         <div class="content">
             <div id="module-dashboard" class="module-pane active">
                 <div class="dashboard-stats" id="dashboardStats"></div>
-                <div class="welcome-card">
+                <div style="background:white; border-radius:16px; padding:30px; text-align:center;">
                     <i class="fas fa-chart-line" style="font-size: 48px; color: #10B981;"></i>
                     <h2 style="margin: 15px 0;">Bienvenido a JanQ</h2>
-                    <p>Sistema integral para gestión de negocios</p>
+                    <p>Selecciona un módulo para comenzar</p>
                 </div>
             </div>
             <div id="module-ventas" class="module-pane"><iframe src="modules/module-ventas/index.html"></iframe></div>
             <div id="module-inventario" class="module-pane"><iframe src="modules/module-inventario/index.html"></iframe></div>
-            <div id="module-compras" class="module-pane"><iframe src="modules/module-compras/index.html"></iframe></div>
             <div id="module-clientes" class="module-pane"><iframe src="modules/module-clientes/index.html"></iframe></div>
             <div id="module-proveedores" class="module-pane"><iframe src="modules/module-proveedores/index.html"></iframe></div>
+            <div id="module-compras" class="module-pane"><iframe src="modules/module-compras/index.html"></iframe></div>
             <div id="module-caja" class="module-pane"><iframe src="modules/module-caja/index.html"></iframe></div>
             <div id="module-reportes" class="module-pane"><iframe src="modules/module-reportes/index.html"></iframe></div>
-            <div id="module-configuracion" class="module-pane"><iframe src="modules/module-configuracion/index.html"></iframe></div>
         </div>
     </div>
 
     <script src="db.js"></script>
     <script>
         const session = JSON.parse(localStorage.getItem('janq_session'));
-        if (!session) {
+        if (!session || session.role === 'super_admin') {
             window.location.href = 'index.html';
         }
         
-        // Inicializar base de datos del usuario
-        const db = new JanQDatabase(session.email);
+        // Obtener empresa del usuario
+        const company = janqAdmin.getUserCompany(session.email);
+        const userModules = janqAdmin.getUsers()[session.email]?.modules || ['ventas', 'inventario', 'clientes'];
         
         document.getElementById('userName').textContent = session.name;
-        document.getElementById('userPlan').textContent = session.plan || 'Básico';
+        document.getElementById('companyName').textContent = company?.name || 'Mi Empresa';
         
-        // Módulos con permisos según plan
+        // Módulos disponibles según permisos
         const allModules = [
-            { id: 'dashboard', name: 'Dashboard', icon: 'fa-chart-line', requiredPlan: 'basic' },
-            { id: 'ventas', name: 'Punto de Venta', icon: 'fa-shopping-cart', requiredPlan: 'basic' },
-            { id: 'inventario', name: 'Inventario', icon: 'fa-boxes', requiredPlan: 'basic' },
-            { id: 'compras', name: 'Compras', icon: 'fa-truck', requiredPlan: 'pro' },
-            { id: 'clientes', name: 'Clientes', icon: 'fa-users', requiredPlan: 'basic' },
-            { id: 'proveedores', name: 'Proveedores', icon: 'fa-building', requiredPlan: 'pro' },
-            { id: 'caja', name: 'Arqueo de Caja', icon: 'fa-cash-register', requiredPlan: 'pro' },
-            { id: 'reportes', name: 'Reportes', icon: 'fa-chart-bar', requiredPlan: 'basic' },
-            { id: 'configuracion', name: 'Configuración', icon: 'fa-cog', requiredPlan: 'admin' }
+            { id: 'dashboard', name: 'Dashboard', icon: 'fa-chart-line' },
+            { id: 'ventas', name: 'Punto de Venta', icon: 'fa-shopping-cart' },
+            { id: 'inventario', name: 'Inventario', icon: 'fa-boxes' },
+            { id: 'clientes', name: 'Clientes', icon: 'fa-users' },
+            { id: 'proveedores', name: 'Proveedores', icon: 'fa-building' },
+            { id: 'compras', name: 'Compras', icon: 'fa-truck' },
+            { id: 'caja', name: 'Arqueo de Caja', icon: 'fa-cash-register' },
+            { id: 'reportes', name: 'Reportes', icon: 'fa-chart-bar' }
         ];
         
-        const userPlan = session.plan || 'basic';
-        const isAdmin = session.role === 'admin';
-        
-        const availableModules = allModules.filter(m => {
-            if (m.requiredPlan === 'admin') return isAdmin;
-            if (m.requiredPlan === 'pro') return userPlan === 'pro' || isAdmin;
-            return true;
-        });
+        const availableModules = allModules.filter(m => m.id === 'dashboard' || userModules.includes(m.id));
         
         const sidebar = document.getElementById('sidebar');
         sidebar.innerHTML = availableModules.map(mod => `
@@ -157,6 +141,9 @@
             </div>
         `).join('');
         
+        // Inicializar base de datos de la empresa
+        const db = new JanQDatabase(company.id);
+        
         function loadStats() {
             const stats = db.getStats();
             const statsDiv = document.getElementById('dashboardStats');
@@ -165,7 +152,7 @@
                     <div class="stat-card"><i class="fas fa-box"></i><h3>${stats.totalProductos}</h3><p>Productos</p></div>
                     <div class="stat-card"><i class="fas fa-shopping-cart"></i><h3>${stats.totalVentas}</h3><p>Ventas</p></div>
                     <div class="stat-card"><i class="fas fa-users"></i><h3>${stats.totalClientes}</h3><p>Clientes</p></div>
-                    <div class="stat-card"><i class="fas fa-building"></i><h3>${stats.totalProveedores}</h3><p>Proveedores</p></div>
+                    <div class="stat-card"><i class="fas fa-chart-line"></i><h3>$${stats.ingresosTotales.toFixed(0)}</h3><p>Ingresos</p></div>
                 `;
             }
         }
@@ -180,9 +167,9 @@
                 document.getElementById(`module-${moduleId}`).classList.add('active');
                 
                 if (moduleId !== 'dashboard') {
-                    let analytics = db.getDB().collections.analytics;
-                    analytics.push({ user: session.email, module: moduleId, timestamp: new Date().toISOString() });
-                    db.saveDB(db.getDB());
+                    if (window.frames[0] && window.frames[0].loadCompanyData) {
+                        window.frames[0].loadCompanyData(company.id);
+                    }
                 }
             });
         });

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JanQ - Administración</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #F1F5F9; }
+        .header {
+            background: #1E293B;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo i { font-size: 28px; color: #10B981; }
+        .content { padding: 30px; max-width: 1400px; margin: 0 auto; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        .tab-btn {
+            padding: 12px 24px;
+            background: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #475569;
+        }
+        .tab-btn.active {
+            background: #10B981;
+            color: white;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid #E2E8F0;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            background: #10B981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .btn-danger {
+            background: #EF4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .btn-secondary {
+            background: #64748B;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #E2E8F0; }
+        th { background: #F8FAFC; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            width: 500px;
+            max-width: 90%;
+        }
+        .modal-content input, .modal-content select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-active { background: #DCFCE7; color: #166534; }
+        .badge-inactive { background: #FEE2E2; color: #991B1B; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo"><i class="fas fa-chart-line"></i><h1>JanQ Admin</h1></div>
+        <div><button class="btn-secondary" onclick="logout()">Salir</button></div>
+    </div>
+    <div class="content">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('companies')">Empresas</button>
+            <button class="tab-btn" onclick="showTab('users')">Usuarios</button>
+        </div>
+        
+        <div id="tab-companies" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-building"></i> Empresas</h2>
+                    <button class="btn-primary" onclick="openCompanyModal()">+ Nueva Empresa</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table id="companiesTable">
+                        <thead><tr><th>ID</th><th>Nombre</th><th>Plan</th><th>Módulos</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+                        <tbody id="companiesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div id="tab-users" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-users"></i> Usuarios</h2>
+                    <button class="btn-primary" onclick="openUserModal()">+ Nuevo Usuario</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table id="usersTable">
+                        <thead><tr><th>Email</th><th>Nombre</th><th>Empresa</th><th>Rol</th><th>Módulos</th><th>Estado</th><th></th></tr></thead>
+                        <tbody id="usersBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Empresa -->
+    <div id="companyModal" class="modal">
+        <div class="modal-content">
+            <h3>Nueva Empresa</h3>
+            <input type="text" id="companyName" placeholder="Nombre de la empresa">
+            <select id="companyPlan">
+                <option value="basic">Básico</option>
+                <option value="pro">Profesional</option>
+                <option value="enterprise">Empresarial</option>
+            </select>
+            <select id="companyModules" multiple size="5">
+                <option value="ventas">Punto de Venta</option>
+                <option value="inventario">Inventario</option>
+                <option value="clientes">Clientes</option>
+                <option value="proveedores">Proveedores</option>
+                <option value="compras">Compras</option>
+                <option value="caja">Arqueo de Caja</option>
+                <option value="reportes">Reportes</option>
+            </select>
+            <button class="btn-primary" onclick="saveCompany()">Guardar</button>
+            <button class="btn-secondary" onclick="closeCompanyModal()">Cancelar</button>
+        </div>
+    </div>
+    
+    <!-- Modal Usuario -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <h3>Nuevo Usuario</h3>
+            <input type="email" id="userEmail" placeholder="Email">
+            <input type="text" id="userName" placeholder="Nombre completo">
+            <input type="password" id="userPassword" placeholder="Contraseña">
+            <select id="userCompany"></select>
+            <select id="userRole">
+                <option value="user">Usuario</option>
+                <option value="admin">Administrador de empresa</option>
+            </select>
+            <button class="btn-primary" onclick="saveUser()">Guardar</button>
+            <button class="btn-secondary" onclick="closeUserModal()">Cancelar</button>
+        </div>
+    </div>
+    
+    <script src="db.js"></script>
+    <script>
+        // Verificar sesión de admin
+        const session = JSON.parse(localStorage.getItem('janq_session'));
+        if (!session || session.role !== 'super_admin') {
+            window.location.href = 'index.html';
+        }
+        
+        function showTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            if (tab === 'companies') {
+                document.querySelector('.tab-btn:first-child').classList.add('active');
+                document.getElementById('tab-companies').classList.add('active');
+                loadCompanies();
+            } else {
+                document.querySelector('.tab-btn:last-child').classList.add('active');
+                document.getElementById('tab-users').classList.add('active');
+                loadUsers();
+            }
+        }
+        
+        function loadCompanies() {
+            const companies = janqAdmin.getCompanies();
+            const tbody = document.getElementById('companiesBody');
+            tbody.innerHTML = Object.values(companies).map(c => `
+                <tr>
+                    <td>${c.id.substring(0, 8)}...</td>
+                    <td>${c.name}</td>
+                    <td>${c.plan}</td>
+                    <td>${c.modules.join(', ')}</td>
+                    <td>${new Date(c.createdAt).toLocaleDateString()}</td>
+                    <td><span class="badge badge-active">Activo</span></td>
+                    <td><button class="btn-danger" onclick="deleteCompany('${c.id}')">Eliminar</button></td>
+                </table>
+            `).join('');
+        }
+        
+        function loadUsers() {
+            const users = janqAdmin.getUsers();
+            const companies = janqAdmin.getCompanies();
+            const tbody = document.getElementById('usersBody');
+            tbody.innerHTML = Object.values(users).map(u => `
+                <tr>
+                    <td>${u.email}</td>
+                    <td>${u.name}</td>
+                    <td>${companies[u.companyId]?.name || 'N/A'}</td>
+                    <td>${u.role === 'admin' ? 'Admin' : 'Usuario'}</td>
+                    <td>${u.modules?.join(', ') || '-'}</td>
+                    <td><span class="badge badge-active">Activo</span></td>
+                    <td><button class="btn-danger" onclick="deleteUser('${u.email}')">Eliminar</button></td>
+                </tr>
+            `).join('');
+        }
+        
+        function openCompanyModal() {
+            document.getElementById('companyModal').style.display = 'flex';
+        }
+        
+        function closeCompanyModal() {
+            document.getElementById('companyModal').style.display = 'none';
+            document.getElementById('companyName').value = '';
+        }
+        
+        function saveCompany() {
+            const name = document.getElementById('companyName').value;
+            const plan = document.getElementById('companyPlan').value;
+            const modulesSelect = document.getElementById('companyModules');
+            const modules = Array.from(modulesSelect.selectedOptions).map(opt => opt.value);
+            
+            if (!name) { alert('Ingrese nombre de la empresa'); return; }
+            
+            janqAdmin.createCompany(name, plan, modules);
+            closeCompanyModal();
+            loadCompanies();
+            alert('Empresa creada exitosamente');
+        }
+        
+        function deleteCompany(id) {
+            if (confirm('¿Eliminar esta empresa? Se eliminarán todos sus datos.')) {
+                janqAdmin.deleteCompany(id);
+                loadCompanies();
+            }
+        }
+        
+        function openUserModal() {
+            const companies = janqAdmin.getCompanies();
+            const select = document.getElementById('userCompany');
+            select.innerHTML = Object.values(companies).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            document.getElementById('userModal').style.display = 'flex';
+        }
+        
+        function closeUserModal() {
+            document.getElementById('userModal').style.display = 'none';
+            document.getElementById('userEmail').value = '';
+            document.getElementById('userName').value = '';
+            document.getElementById('userPassword').value = '';
+        }
+        
+        function saveUser() {
+            const email = document.getElementById('userEmail').value;
+            const name = document.getElementById('userName').value;
+            const password = document.getElementById('userPassword').value;
+            const companyId = document.getElementById('userCompany').value;
+            const role = document.getElementById('userRole').value;
+            
+            if (!email || !name || !password) { alert('Complete todos los campos'); return; }
+            
+            const result = janqAdmin.createUser(email, password, name, companyId, role);
+            if (result) {
+                closeUserModal();
+                loadUsers();
+                alert('Usuario creado exitosamente');
+            } else {
+                alert('Error al crear usuario');
+            }
+        }
+        
+        function deleteUser(email) {
+            if (confirm('¿Eliminar este usuario?')) {
+                janqAdmin.deleteUser(email);
+                loadUsers();
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('janq_session');
+            window.location.href = 'index.html';
+        }
+        
+        loadCompanies();
+    </script>
+</body>
+</html>

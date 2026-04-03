@@ -1,21 +1,20 @@
 // ============================================
-// JanQ Database System - Multi-usuario
-// Base de datos aislada por usuario
+// JanQ Database System - Multi-tenant
+// Cada empresa tiene su propia base de datos
 // ============================================
 
 class JanQDatabase {
-    constructor(userEmail) {
-        this.userEmail = userEmail;
-        this.dbKey = `janq_db_${userEmail}`;
+    constructor(companyId) {
+        this.companyId = companyId;
+        this.dbKey = `janq_db_${companyId}`;
         this.initDatabase();
     }
     
-    // Inicializar base de datos del usuario
     initDatabase() {
         if (!localStorage.getItem(this.dbKey)) {
             const emptyDB = {
                 version: '1.0',
-                user: this.userEmail,
+                companyId: this.companyId,
                 createdAt: new Date().toISOString(),
                 collections: {
                     productos: [],
@@ -31,12 +30,10 @@ class JanQDatabase {
         }
     }
     
-    // Obtener toda la base de datos
     getDB() {
         return JSON.parse(localStorage.getItem(this.dbKey));
     }
     
-    // Guardar base de datos
     saveDB(db) {
         localStorage.setItem(this.dbKey, JSON.stringify(db));
     }
@@ -159,7 +156,7 @@ class JanQDatabase {
         };
     }
     
-    // Exportar/Importar datos
+    // Exportar/Importar
     exportData() {
         const db = this.getDB();
         return JSON.stringify(db.collections, null, 2);
@@ -174,5 +171,144 @@ class JanQDatabase {
     }
 }
 
-// Exportar para uso global
+// Sistema de gestión de empresas y usuarios
+class JanQAdmin {
+    constructor() {
+        this.initSystem();
+    }
+    
+    initSystem() {
+        if (!localStorage.getItem('janq_companies')) {
+            const companies = {};
+            localStorage.setItem('janq_companies', JSON.stringify(companies));
+        }
+        if (!localStorage.getItem('janq_users')) {
+            const users = {};
+            localStorage.setItem('janq_users', JSON.stringify(users));
+        }
+    }
+    
+    // ========== Gestión de Empresas ==========
+    getCompanies() {
+        return JSON.parse(localStorage.getItem('janq_companies'));
+    }
+    
+    createCompany(name, plan = 'basic', modules = ['ventas', 'inventario', 'clientes']) {
+        const companies = this.getCompanies();
+        const companyId = 'comp_' + Date.now();
+        companies[companyId] = {
+            id: companyId,
+            name: name,
+            plan: plan,
+            modules: modules,
+            createdAt: new Date().toISOString(),
+            active: true
+        };
+        localStorage.setItem('janq_companies', JSON.stringify(companies));
+        
+        // Crear base de datos para la empresa
+        new JanQDatabase(companyId);
+        return companyId;
+    }
+    
+    updateCompany(companyId, data) {
+        const companies = this.getCompanies();
+        if (companies[companyId]) {
+            companies[companyId] = { ...companies[companyId], ...data };
+            localStorage.setItem('janq_companies', JSON.stringify(companies));
+            return true;
+        }
+        return false;
+    }
+    
+    deleteCompany(companyId) {
+        const companies = this.getCompanies();
+        if (companies[companyId]) {
+            delete companies[companyId];
+            localStorage.setItem('janq_companies', JSON.stringify(companies));
+            localStorage.removeItem(`janq_db_${companyId}`);
+            return true;
+        }
+        return false;
+    }
+    
+    // ========== Gestión de Usuarios ==========
+    getUsers() {
+        return JSON.parse(localStorage.getItem('janq_users'));
+    }
+    
+    createUser(email, password, name, companyId, role = 'user', modules = null) {
+        const users = this.getUsers();
+        const companies = this.getCompanies();
+        
+        if (users[email]) return false;
+        if (!companies[companyId]) return false;
+        
+        users[email] = {
+            email: email,
+            password: password,
+            name: name,
+            companyId: companyId,
+            role: role,
+            modules: modules || companies[companyId].modules,
+            createdAt: new Date().toISOString(),
+            active: true
+        };
+        localStorage.setItem('janq_users', JSON.stringify(users));
+        return true;
+    }
+    
+    updateUser(email, data) {
+        const users = this.getUsers();
+        if (users[email]) {
+            users[email] = { ...users[email], ...data };
+            localStorage.setItem('janq_users', JSON.stringify(users));
+            return true;
+        }
+        return false;
+    }
+    
+    deleteUser(email) {
+        const users = this.getUsers();
+        if (users[email]) {
+            delete users[email];
+            localStorage.setItem('janq_users', JSON.stringify(users));
+            return true;
+        }
+        return false;
+    }
+    
+    // ========== Autenticación ==========
+    authenticate(email, password) {
+        const users = this.getUsers();
+        const user = users[email];
+        if (user && user.password === password && user.active) {
+            return user;
+        }
+        return null;
+    }
+    
+    // ========== Obtener empresa del usuario ==========
+    getUserCompany(email) {
+        const users = this.getUsers();
+        const user = users[email];
+        if (user) {
+            const companies = this.getCompanies();
+            return companies[user.companyId];
+        }
+        return null;
+    }
+    
+    // ========== Verificar acceso a módulo ==========
+    canAccessModule(email, moduleName) {
+        const users = this.getUsers();
+        const user = users[email];
+        if (!user) return false;
+        if (user.role === 'admin') return true;
+        return user.modules.includes(moduleName);
+    }
+}
+
 window.JanQDatabase = JanQDatabase;
+window.JanQAdmin = JanQAdmin;
+window.janqAdmin = new JanQAdmin();
