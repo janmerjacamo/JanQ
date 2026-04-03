@@ -2,78 +2,31 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JanQ - Arqueo de Caja</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>JanQ - Caja</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: white; padding: 24px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: #F8FAFC; padding: 20px; border-radius: 16px; text-align: center; }
-        .stat-card i { font-size: 32px; color: #10B981; margin-bottom: 10px; }
-        .stat-card h3 { font-size: 32px; font-weight: 700; }
-        .form-card { background: #F8FAFC; padding: 20px; border-radius: 16px; margin-top: 20px; }
-        .form-card input { padding: 10px; border: 1px solid #E2E8F0; border-radius: 8px; margin-right: 10px; }
-        .btn-primary { background: #10B981; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #E2E8F0; }
+        body { font-family: 'Inter', sans-serif; padding: 20px; background: white; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .card { background: #f8fafc; padding: 20px; border-radius: 16px; text-align: center; }
+        .card h3 { font-size: 32px; color: #10B981; }
+        .btn { background: #10B981; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 20px; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
     </style>
 </head>
 <body>
-    <h2><i class="fas fa-cash-register"></i> Arqueo de Caja</h2>
-    <div class="stats-grid">
-        <div class="stat-card"><i class="fas fa-chart-line"></i><h3 id="ventasHoy">0</h3><p>Ventas hoy</p></div>
-        <div class="stat-card"><i class="fas fa-dollar-sign"></i><h3 id="ingresosHoy">$0</h3><p>Ingresos hoy</p></div>
-        <div class="stat-card"><i class="fas fa-cash-register"></i><h3 id="efectivoEsperado">$0</h3><p>Efectivo esperado</p></div>
-    </div>
-    <div class="form-card">
-        <h3>Arqueo físico</h3>
-        <input type="number" id="efectivoContado" placeholder="Efectivo contado">
-        <button class="btn-primary" onclick="realizarArqueo()">Realizar arqueo</button>
-        <div id="arqueoResultado" style="margin-top: 15px;"></div>
-    </div>
-    <h3>Ventas del día</h3>
-    <div style="overflow-x: auto;">
-        <table id="ventasTable">
-            <thead><tr><th>Hora</th><th>Cliente</th><th>Total</th></tr></thead>
-            <tbody id="ventasBody"></tbody>
-        </table>
-    </div>
+    <h2>Arqueo de Caja</h2>
+    <div class="stats"><div class="card"><i class="fas fa-shopping-cart"></i><h3 id="ventasHoy">0</h3><p>Ventas hoy</p></div><div class="card"><i class="fas fa-dollar-sign"></i><h3 id="ingresosHoy">$0</h3><p>Ingresos hoy</p></div><div class="card"><i class="fas fa-cash-register"></i><h3 id="efectivoEsperado">$0</h3><p>Efectivo esperado</p></div></div>
+    <div><input type="number" id="efectivoContado" placeholder="Efectivo contado"><button class="btn" onclick="arqueo()">Realizar arqueo</button></div>
+    <div id="resultado" style="margin-top: 20px;"></div>
     <script>
         const ventas = JSON.parse(localStorage.getItem('janq_ventas')) || [];
         const hoy = new Date().toDateString();
         const ventasHoy = ventas.filter(v => new Date(v.fecha).toDateString() === hoy);
-        
-        const totalVentas = ventasHoy.length;
-        const totalIngresos = ventasHoy.reduce((s, v) => s + v.total, 0);
-        
-        document.getElementById('ventasHoy').textContent = totalVentas;
-        document.getElementById('ingresosHoy').textContent = `$${totalIngresos.toFixed(2)}`;
-        document.getElementById('efectivoEsperado').textContent = `$${totalIngresos.toFixed(2)}`;
-        
-        const ventasBody = document.getElementById('ventasBody');
-        ventasBody.innerHTML = ventasHoy.map(v => `
-            <tr>
-                <td>${new Date(v.fecha).toLocaleTimeString()}</td>
-                <td>${v.cliente || 'Consumidor final'}</td>
-                <td>$${v.total.toFixed(2)}</td>
-            </tr>
-        `).join('');
-        
-        function realizarArqueo() {
-            const efectivoContado = parseFloat(document.getElementById('efectivoContado').value);
-            const diferencia = efectivoContado - totalIngresos;
-            const resultado = document.getElementById('arqueoResultado');
-            
-            if (Math.abs(diferencia) < 0.01) {
-                resultado.innerHTML = '<div style="background:#ECFDF5; padding:15px; border-radius:12px; color:#10B981;">✅ Arqueo correcto. El efectivo coincide con las ventas.</div>';
-            } else if (diferencia > 0) {
-                resultado.innerHTML = `<div style="background:#FEF3C7; padding:15px; border-radius:12px; color:#D97706;">⚠️ Sobrante de $${diferencia.toFixed(2)}. Revisar transacciones.</div>`;
-            } else {
-                resultado.innerHTML = `<div style="background:#FEF2F2; padding:15px; border-radius:12px; color:#DC2626;">❌ Faltante de $${Math.abs(diferencia).toFixed(2)}. Revisar ventas no registradas.</div>`;
-            }
-        }
+        const total = ventasHoy.reduce((s, v) => s + v.total, 0);
+        document.getElementById('ventasHoy').textContent = ventasHoy.length;
+        document.getElementById('ingresosHoy').textContent = `$${total}`;
+        document.getElementById('efectivoEsperado').textContent = `$${total}`;
+        function arqueo() { const contado = parseFloat(document.getElementById('efectivoContado').value); const diff = contado - total; if(Math.abs(diff) < 0.01) document.getElementById('resultado').innerHTML = '<div style="background:#ECFDF5; padding:15px; border-radius:12px; color:#10B981;">✅ Arqueo correcto</div>'; else if(diff > 0) document.getElementById('resultado').innerHTML = `<div style="background:#FEF3C7; padding:15px; border-radius:12px;">⚠️ Sobrante: $${diff.toFixed(2)}</div>`; else document.getElementById('resultado').innerHTML = `<div style="background:#FEF2F2; padding:15px; border-radius:12px;">❌ Faltante: $${Math.abs(diff).toFixed(2)}</div>`; }
     </script>
 </body>
 </html>

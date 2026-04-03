@@ -19,6 +19,7 @@
         }
         .logo { display: flex; align-items: center; gap: 12px; }
         .logo i { font-size: 28px; color: #10B981; }
+        .logo h1 { font-size: 22px; }
         .user-info { display: flex; align-items: center; gap: 20px; }
         .logout-btn {
             background: rgba(255,255,255,0.1);
@@ -28,43 +29,64 @@
             border-radius: 8px;
             cursor: pointer;
         }
-        .nav {
+        .app-layout { display: flex; min-height: calc(100vh - 70px); }
+        .sidebar {
+            width: 280px;
             background: white;
-            padding: 0 30px;
-            border-bottom: 1px solid #E2E8F0;
+            border-right: 1px solid #E2E8F0;
+            padding: 20px 0;
+        }
+        .nav-item {
             display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-        .nav-btn {
-            padding: 15px 20px;
-            background: none;
-            border: none;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            margin: 4px 12px;
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: 500;
-            color: #5A6874;
-            border-bottom: 2px solid transparent;
+            color: #475569;
+            transition: all 0.2s;
         }
-        .nav-btn.active {
-            color: #10B981;
-            border-bottom-color: #10B981;
-        }
-        .content { padding: 30px; }
+        .nav-item:hover { background: #F1F5F9; color: #10B981; }
+        .nav-item.active { background: #ECFDF5; color: #10B981; }
+        .nav-item i { width: 24px; font-size: 18px; }
+        .content { flex: 1; padding: 24px 32px; background: #F8FAFC; }
         .module-pane { display: none; }
         .module-pane.active { display: block; }
         iframe {
             width: 100%;
-            height: calc(100vh - 150px);
+            height: calc(100vh - 120px);
             border: none;
             border-radius: 16px;
             background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid #E2E8F0;
+        }
+        .stat-card i { font-size: 32px; color: #10B981; margin-bottom: 10px; }
+        .stat-card h3 { font-size: 28px; font-weight: 700; }
+        .stat-card p { color: #64748B; }
         .welcome-card {
             background: white;
             border-radius: 16px;
             padding: 40px;
             text-align: center;
             border: 1px solid #E2E8F0;
+        }
+        @media (max-width: 900px) {
+            .sidebar { width: 80px; }
+            .nav-item span:last-child { display: none; }
+            .dashboard-stats { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
@@ -76,45 +98,79 @@
             <button class="logout-btn" id="logoutBtn">Salir</button>
         </div>
     </div>
-    
-    <div class="nav">
-        <button class="nav-btn active" data-module="dashboard">Dashboard</button>
-        <button class="nav-btn" data-module="ventas">Punto de Venta</button>
-        <button class="nav-btn" data-module="inventario">Inventario</button>
-        <button class="nav-btn" data-module="clientes">Clientes</button>
-        <button class="nav-btn" data-module="reportes">Reportes</button>
-    </div>
-    
-    <div class="content">
-        <div id="module-dashboard" class="module-pane active">
-            <div class="welcome-card">
-                <i class="fas fa-chart-line" style="font-size: 48px; color: #10B981;"></i>
-                <h2 style="margin: 15px 0;" id="welcomeMsg">Bienvenido</h2>
-                <p>Sistema de gestión empresarial JanQ</p>
+    <div class="app-layout">
+        <div class="sidebar" id="sidebar"></div>
+        <div class="content">
+            <div id="module-dashboard" class="module-pane active">
+                <div class="dashboard-stats" id="dashboardStats"></div>
+                <div class="welcome-card">
+                    <i class="fas fa-chart-line" style="font-size: 48px; color: #10B981;"></i>
+                    <h2 style="margin: 15px 0;" id="welcomeMsg">Bienvenido</h2>
+                    <p>Selecciona un módulo para comenzar</p>
+                </div>
             </div>
+            <div id="module-ventas" class="module-pane"><iframe src="modules/module-ventas/index.html"></iframe></div>
+            <div id="module-inventario" class="module-pane"><iframe src="modules/module-inventario/index.html"></iframe></div>
+            <div id="module-clientes" class="module-pane"><iframe src="modules/module-clientes/index.html"></iframe></div>
+            <div id="module-proveedores" class="module-pane"><iframe src="modules/module-proveedores/index.html"></iframe></div>
+            <div id="module-compras" class="module-pane"><iframe src="modules/module-compras/index.html"></iframe></div>
+            <div id="module-caja" class="module-pane"><iframe src="modules/module-caja/index.html"></iframe></div>
+            <div id="module-reportes" class="module-pane"><iframe src="modules/module-reportes/index.html"></iframe></div>
+            <div id="module-configuracion" class="module-pane"><iframe src="modules/module-configuracion/index.html"></iframe></div>
         </div>
-        <div id="module-ventas" class="module-pane"><iframe src="modules/module-ventas/index.html"></iframe></div>
-        <div id="module-inventario" class="module-pane"><iframe src="modules/module-inventario/index.html"></iframe></div>
-        <div id="module-clientes" class="module-pane"><iframe src="modules/module-clientes/index.html"></iframe></div>
-        <div id="module-reportes" class="module-pane"><iframe src="modules/module-reportes/index.html"></iframe></div>
     </div>
 
     <script>
         const session = JSON.parse(localStorage.getItem('janq_session'));
-        if (!session) {
-            window.location.href = 'index.html';
-        }
+        if (!session) window.location.href = 'index.html';
         
         document.getElementById('userName').textContent = session.name;
         document.getElementById('welcomeMsg').textContent = `Bienvenido, ${session.name}`;
         
-        document.querySelectorAll('.nav-btn').forEach(btn => {
+        const modules = [
+            { id: 'dashboard', name: 'Dashboard', icon: 'fa-chart-line' },
+            { id: 'ventas', name: 'Punto de Venta', icon: 'fa-shopping-cart' },
+            { id: 'inventario', name: 'Inventario', icon: 'fa-boxes' },
+            { id: 'clientes', name: 'Clientes', icon: 'fa-users' },
+            { id: 'proveedores', name: 'Proveedores', icon: 'fa-building' },
+            { id: 'compras', name: 'Compras', icon: 'fa-truck' },
+            { id: 'caja', name: 'Arqueo de Caja', icon: 'fa-cash-register' },
+            { id: 'reportes', name: 'Reportes', icon: 'fa-chart-bar' },
+            { id: 'configuracion', name: 'Configuración', icon: 'fa-cog' }
+        ];
+        
+        const sidebar = document.getElementById('sidebar');
+        sidebar.innerHTML = modules.map(mod => `
+            <div class="nav-item" data-module="${mod.id}">
+                <i class="fas ${mod.icon}"></i>
+                <span>${mod.name}</span>
+            </div>
+        `).join('');
+        
+        function loadStats() {
+            const productos = JSON.parse(localStorage.getItem('janq_productos')) || [];
+            const ventas = JSON.parse(localStorage.getItem('janq_ventas')) || [];
+            const clientes = JSON.parse(localStorage.getItem('janq_clientes')) || [];
+            const proveedores = JSON.parse(localStorage.getItem('janq_proveedores')) || [];
+            const statsDiv = document.getElementById('dashboardStats');
+            if (statsDiv) {
+                statsDiv.innerHTML = `
+                    <div class="stat-card"><i class="fas fa-box"></i><h3>${productos.length}</h3><p>Productos</p></div>
+                    <div class="stat-card"><i class="fas fa-shopping-cart"></i><h3>${ventas.length}</h3><p>Ventas</p></div>
+                    <div class="stat-card"><i class="fas fa-users"></i><h3>${clientes.length}</h3><p>Clientes</p></div>
+                    <div class="stat-card"><i class="fas fa-building"></i><h3>${proveedores.length}</h3><p>Proveedores</p></div>
+                `;
+            }
+        }
+        loadStats();
+        
+        document.querySelectorAll('.nav-item').forEach(btn => {
             btn.addEventListener('click', () => {
-                const module = btn.dataset.module;
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                const moduleId = btn.dataset.module;
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
                 btn.classList.add('active');
                 document.querySelectorAll('.module-pane').forEach(pane => pane.classList.remove('active'));
-                document.getElementById(`module-${module}`).classList.add('active');
+                document.getElementById(`module-${moduleId}`).classList.add('active');
             });
         });
         
@@ -122,6 +178,8 @@
             localStorage.removeItem('janq_session');
             window.location.href = 'index.html';
         });
+        
+        window.loadStats = loadStats;
     </script>
 </body>
 </html>

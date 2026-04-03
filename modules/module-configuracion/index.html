@@ -2,69 +2,26 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JanQ - Configuración</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: white; padding: 20px; }
+        body { font-family: 'Inter', sans-serif; padding: 20px; background: white; }
         .card { background: #f8fafc; border-radius: 16px; padding: 20px; margin-bottom: 20px; }
-        .btn { background: #10B981; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
-        .btn-danger { background: #ef4444; }
+        .btn { background: #10B981; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-right: 10px; }
+        .btn-danger { background: #EF4444; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; width: 100%; margin-top: 10px; }
     </style>
 </head>
 <body>
     <h2>Configuración</h2>
-    <div class="card">
-        <h3>Datos de la empresa</h3>
-        <input type="text" id="empresa" placeholder="Nombre de la empresa" style="width:100%; padding:10px; margin:10px 0; border-radius:8px; border:1px solid #ddd;">
-        <button class="btn" onclick="guardarConfig()">Guardar</button>
-    </div>
-    <div class="card">
-        <h3>Respaldo de datos</h3>
-        <button class="btn" onclick="exportarDatos()">Exportar respaldo</button>
-        <input type="file" id="restoreFile" style="margin-top:10px;">
-        <button class="btn" onclick="restaurarDatos()">Restaurar</button>
-    </div>
-    <div class="card">
-        <h3>Limpiar datos</h3>
-        <button class="btn btn-danger" onclick="limpiarDatos()">Limpiar todos los datos</button>
-    </div>
+    <div class="card"><h3>Datos de la empresa</h3><input type="text" id="empresa" placeholder="Nombre de la empresa"><button class="btn" onclick="guardar()">Guardar</button></div>
+    <div class="card"><h3>Respaldo</h3><button class="btn" onclick="exportar()">Exportar respaldo</button><input type="file" id="restore"><button class="btn" onclick="restaurar()">Restaurar</button></div>
+    <div class="card"><h3>Peligro</h3><button class="btn btn-danger" onclick="limpiar()">Limpiar todos los datos</button></div>
     <script>
-        function guardarConfig() {
-            const empresa = document.getElementById('empresa').value;
-            localStorage.setItem('janq_empresa', empresa);
-            alert('Configuración guardada');
-        }
-        function exportarDatos() {
-            const data = { productos: JSON.parse(localStorage.getItem('janq_productos')) || [] };
-            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'janq_respaldo.json';
-            a.click();
-        }
-        function restaurarDatos() {
-            const file = document.getElementById('restoreFile').files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = JSON.parse(e.target.result);
-                if (data.productos) localStorage.setItem('janq_productos', JSON.stringify(data.productos));
-                alert('Datos restaurados');
-                location.reload();
-            };
-            reader.readAsText(file);
-        }
-        function limpiarDatos() {
-            if (confirm('¿Eliminar todos los datos?')) {
-                localStorage.clear();
-                alert('Datos eliminados');
-                location.reload();
-            }
-        }
+        function guardar() { localStorage.setItem('janq_empresa', document.getElementById('empresa').value); alert('Guardado'); }
+        function exportar() { const data = { productos: JSON.parse(localStorage.getItem('janq_productos')), ventas: JSON.parse(localStorage.getItem('janq_ventas')), clientes: JSON.parse(localStorage.getItem('janq_clientes')), proveedores: JSON.parse(localStorage.getItem('janq_proveedores')) }; const blob = new Blob([JSON.stringify(data)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'janq_respaldo.json'; a.click(); }
+        function restaurar() { const file = document.getElementById('restore').files[0]; if(file){ const reader = new FileReader(); reader.onload = function(e) { const data = JSON.parse(e.target.result); if(data.productos) localStorage.setItem('janq_productos', JSON.stringify(data.productos)); if(data.ventas) localStorage.setItem('janq_ventas', JSON.stringify(data.ventas)); if(data.clientes) localStorage.setItem('janq_clientes', JSON.stringify(data.clientes)); if(data.proveedores) localStorage.setItem('janq_proveedores', JSON.stringify(data.proveedores)); alert('Restaurado'); location.reload(); }; reader.readAsText(file); } }
+        function limpiar() { if(confirm('¿Eliminar todos los datos?')){ localStorage.clear(); alert('Datos eliminados'); location.reload(); } }
     </script>
 </body>
 </html>

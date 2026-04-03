@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JanQ ERP - Acceso</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -30,44 +30,18 @@
             padding: 40px 30px;
             text-align: center;
         }
-        .login-header i {
-            font-size: 48px;
-            color: #10B981;
-            margin-bottom: 15px;
-        }
-        .login-header h1 {
-            color: white;
-            font-size: 28px;
-        }
-        .login-header p {
-            color: #94A3B8;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-        .login-body {
-            padding: 30px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            color: #475569;
-            margin-bottom: 8px;
-        }
+        .login-header i { font-size: 48px; color: #10B981; }
+        .login-header h1 { color: white; font-size: 28px; }
+        .login-header p { color: #94A3B8; font-size: 14px; }
+        .login-body { padding: 30px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { font-size: 13px; color: #475569; margin-bottom: 8px; display: block; }
         .form-group input {
             width: 100%;
-            padding: 14px 16px;
+            padding: 14px;
             border: 1.5px solid #E2E8F0;
             border-radius: 14px;
             font-size: 14px;
-            font-family: 'Inter', sans-serif;
-        }
-        .form-group input:focus {
-            outline: none;
-            border-color: #10B981;
         }
         .btn-login {
             width: 100%;
@@ -77,31 +51,9 @@
             border: none;
             border-radius: 14px;
             font-weight: 600;
-            font-size: 15px;
             cursor: pointer;
-            margin-top: 10px;
         }
-        .btn-login:hover {
-            background: #059669;
-        }
-        .error-msg {
-            background: #FEF2F2;
-            color: #DC2626;
-            padding: 12px;
-            border-radius: 12px;
-            font-size: 13px;
-            margin-bottom: 20px;
-            border-left: 3px solid #DC2626;
-        }
-        .demo-info {
-            margin-top: 24px;
-            padding: 16px;
-            background: #F8FAFC;
-            border-radius: 16px;
-            text-align: center;
-            font-size: 12px;
-            color: #64748B;
-        }
+        .error-msg { background: #FEF2F2; color: #DC2626; padding: 12px; border-radius: 12px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -116,57 +68,37 @@
             <form id="loginForm">
                 <div class="form-group">
                     <label>Correo electrónico</label>
-                    <input type="email" id="email" placeholder="tu@empresa.com" required>
+                    <input type="email" id="email" placeholder="correo@empresa.com" required>
                 </div>
                 <div class="form-group">
                     <label>Contraseña</label>
-                    <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
+                    <input type="password" id="password" placeholder="Contraseña" required>
                 </div>
                 <button type="submit" class="btn-login">Ingresar</button>
             </form>
-            <div class="demo-info">
-                <i class="fas fa-info-circle"></i> Credenciales: janmerfjq@gmail.com / 18902748
+            <div style="margin-top: 20px; text-align: center; font-size: 12px; color: #64748B;">
+                <i class="fas fa-info-circle"></i> janmerfjq@gmail.com / 18902748
             </div>
         </div>
     </div>
-
     <script>
-        // Usuario por defecto
-        const USUARIO_VALIDO = {
-            email: 'janmerfjq@gmail.com',
-            password: '18902748',
-            name: 'Janmer Jacamo',
-            role: 'admin'
-        };
+        const USUARIO = { email: 'janmerfjq@gmail.com', password: '18902748', name: 'Janmer Jacamo', role: 'admin' };
         
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             
-            if (email === USUARIO_VALIDO.email && password === USUARIO_VALIDO.password) {
-                // Guardar sesión
-                const session = {
-                    email: USUARIO_VALIDO.email,
-                    name: USUARIO_VALIDO.name,
-                    role: USUARIO_VALIDO.role
-                };
-                localStorage.setItem('janq_session', JSON.stringify(session));
+            if (email === USUARIO.email && password === USUARIO.password) {
+                localStorage.setItem('janq_session', JSON.stringify({ email: USUARIO.email, name: USUARIO.name, role: USUARIO.role }));
                 window.location.href = 'dashboard.html';
             } else {
-                document.getElementById('errorMsg').innerHTML = '<div class="error-msg">Correo o contraseña incorrectos</div>';
-                setTimeout(() => {
-                    document.getElementById('errorMsg').innerHTML = '';
-                }, 3000);
+                document.getElementById('errorMsg').innerHTML = '<div class="error-msg">Credenciales incorrectas</div>';
+                setTimeout(() => document.getElementById('errorMsg').innerHTML = '', 3000);
             }
         });
         
-        // Si ya hay sesión, ir al dashboard
-        const session = localStorage.getItem('janq_session');
-        if (session) {
-            window.location.href = 'dashboard.html';
-        }
+        if (localStorage.getItem('janq_session')) window.location.href = 'dashboard.html';
     </script>
 </body>
 </html>
