@@ -22,7 +22,6 @@
             gap: 20px;
             min-height: calc(100vh - 32px);
         }
-        /* Panel izquierdo - Productos */
         .products-panel {
             flex: 2;
             min-width: 280px;
@@ -127,7 +126,6 @@
             margin-top: 4px;
         }
         .product-card .low-stock { color: #EF4444; }
-        /* Panel derecho - Carrito */
         .cart-panel {
             width: 380px;
             min-width: 300px;
@@ -327,13 +325,12 @@
         let selectedClientId = null;
 
         // ==================== CATEGORÍAS ====================
-        const categoriasUnicas = [...new Set(productos.map(p => p.categoria).filter(c => c && c !== 'undefined'))];
-
         function renderCategories() {
             const container = document.getElementById('categoriesContainer');
             if (!container) return;
+            const categorias = [...new Set(productos.map(p => p.categoria).filter(c => c && c !== 'undefined'))];
             container.innerHTML = '<button class="category-btn active" data-categoria="todos">Todos</button>';
-            categoriasUnicas.forEach(cat => {
+            categorias.forEach(cat => {
                 container.innerHTML += `<button class="category-btn" data-categoria="${cat}">${cat}</button>`;
             });
             document.querySelectorAll('.category-btn').forEach(btn => {
@@ -345,25 +342,27 @@
             });
         }
 
-        // ==================== PRODUCTOS ====================
+        // ==================== PRODUCTOS (con búsqueda en tiempo real) ====================
         function renderProducts() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
             const activeCat = document.querySelector('.category-btn.active')?.dataset.categoria;
-            let filtered = productos.filter(p => 
-                (p.nombre?.toLowerCase().includes(search) || (p.codigo?.toLowerCase().includes(search)))
-            );
+            let filtered = productos.filter(p => {
+                const matchName = (p.nombre || '').toLowerCase().includes(searchTerm);
+                const matchCode = (p.codigo || '').toLowerCase().includes(searchTerm);
+                return matchName || matchCode;
+            });
             if (activeCat && activeCat !== 'todos') {
                 filtered = filtered.filter(p => p.categoria === activeCat);
             }
             const grid = document.getElementById('productsGrid');
             if (!grid) return;
             if (filtered.length === 0) {
-                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:#94A3B8;">No se encontraron productos</div>';
+                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:#94A3B8;"><i class="fas fa-search" style="font-size:48px; margin-bottom:16px; display:block;"></i>No se encontraron productos</div>';
                 return;
             }
             grid.innerHTML = filtered.map(p => `
                 <div class="product-card" onclick="addToCart(${p.id})">
-                    <div class="name">${p.nombre || 'Producto'}</div>
+                    <div class="name">${escapeHtml(p.nombre || 'Producto')}</div>
                     <div class="price">$${(p.precioVenta || 0).toFixed(2)}</div>
                     <div class="stock ${(p.stock || 0) < 5 ? 'low-stock' : ''}">Stock: ${p.stock || 0}</div>
                 </div>
@@ -420,7 +419,7 @@
             cartDiv.innerHTML = cart.map(item => `
                 <div class="cart-item">
                     <div class="cart-item-info">
-                        <div class="cart-item-name">${item.nombre || 'Producto'}</div>
+                        <div class="cart-item-name">${escapeHtml(item.nombre || 'Producto')}</div>
                         <div class="cart-item-price">$${(item.precioVenta || 0).toFixed(2)} c/u</div>
                     </div>
                     <div class="cart-item-qty">
@@ -445,7 +444,7 @@
             if (!select) return;
             select.innerHTML = '<option value="consumidor">Consumidor final</option>';
             clientes.forEach(c => {
-                select.innerHTML += `<option value="${c.id}">${c.nombre} - ${c.email || ''}</option>`;
+                select.innerHTML += `<option value="${c.id}">${escapeHtml(c.nombre)} - ${c.email || ''}</option>`;
             });
             select.addEventListener('change', (e) => {
                 selectedClientId = e.target.value === 'consumidor' ? null : parseInt(e.target.value);
@@ -466,6 +465,80 @@
             }
         }
 
+        // ==================== TICKET E IMPRESIÓN ====================
+        function generarTicket(venta, cart, total, cashReceived) {
+            const fecha = new Date(venta.fecha).toLocaleString();
+            let ticket = `╔══════════════════════════════════╗\n`;
+            ticket += `║           JANQ POS              ║\n`;
+            ticket += `║    ${fecha}    ║\n`;
+            ticket += `╠══════════════════════════════════╣\n`;
+            cart.forEach(i => {
+                const line1 = `${i.nombre} x${i.cantidad}`;
+                const line2 = `$${((i.precioVenta || 0) * i.cantidad).toFixed(2)}`;
+                ticket += `║ ${line1.padEnd(30)}║\n`;
+                ticket += `║ ${line2.padEnd(30)}║\n`;
+            });
+            ticket += `╠══════════════════════════════════╣\n`;
+            ticket += `║ TOTAL: $${total.toFixed(2).padStart(22)} ║\n`;
+            ticket += `║ PAGO: ${venta.metodoPago.toUpperCase().padStart(22)} ║\n`;
+            if (venta.metodoPago === 'efectivo' && cashReceived) {
+                ticket += `║ EFECTIVO: $${cashReceived.toFixed(2).padStart(18)} ║\n`;
+                ticket += `║ VUELTO: $${(cashReceived - total).toFixed(2).padStart(19)} ║\n`;
+            } else if (venta.metodoPago !== 'efectivo' && venta.referencia) {
+                ticket += `║ REF: ${venta.referencia.substring(0, 20).padEnd(22)} ║\n`;
+            }
+            ticket += `╚══════════════════════════════════╝\n`;
+            ticket += `       ¡Gracias por su compra!       \n`;
+            return ticket;
+        }
+
+        function imprimirTicket(ticket) {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Ticket JanQ</title>
+                    <style>
+                        body {
+                            font-family: monospace;
+                            padding: 20px;
+                            text-align: center;
+                            background: white;
+                        }
+                        pre {
+                            font-size: 14px;
+                            white-space: pre;
+                            font-family: 'Courier New', monospace;
+                            margin: 0 auto;
+                            display: inline-block;
+                            text-align: left;
+                        }
+                        button {
+                            margin-top: 20px;
+                            padding: 10px 20px;
+                            background: #10B981;
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-family: inherit;
+                        }
+                        @media print {
+                            button { display: none; }
+                            body { padding: 0; margin: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <pre>${ticket}</pre>
+                    <button onclick="window.print()">🖨️ Imprimir ticket</button>
+                    <button onclick="window.close()">Cerrar</button>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
         // ==================== CHECKOUT ====================
         function checkout() {
             if (cart.length === 0) {
@@ -473,9 +546,9 @@
                 return;
             }
             const total = cart.reduce((s, i) => s + ((i.precioVenta || 0) * i.cantidad), 0);
-            
+            let cashReceived = 0;
             if (currentPaymentMethod === 'efectivo') {
-                const cashReceived = parseFloat(document.getElementById('cashAmount')?.value) || 0;
+                cashReceived = parseFloat(document.getElementById('cashAmount')?.value) || 0;
                 if (cashReceived < total) {
                     alert(`Monto insuficiente. Total: $${total.toFixed(2)}`);
                     return;
@@ -520,7 +593,7 @@
             localStorage.setItem('janq_ventas', JSON.stringify(ventas));
             
             // Generar ticket
-            const ticket = generarTicket(venta, cart, total);
+            const ticket = generarTicket(venta, cart, total, cashReceived);
             
             // Limpiar carrito
             cart = [];
@@ -533,54 +606,27 @@
             }
             if (window.parent && window.parent.loadStats) window.parent.loadStats();
             
-            // Mostrar ticket
-            if (confirm('¿Desea ver el ticket?')) {
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(`
-                    <html><head><title>Ticket JanQ</title>
-                    <style>
-                        body { font-family: monospace; padding: 20px; text-align: center; }
-                        pre { font-size: 12px; white-space: pre-wrap; word-wrap: break-word; }
-                        @media print { button { display: none; } }
-                    </style>
-                    </head>
-                    <body>
-                        <pre>${ticket}</pre>
-                        <button onclick="window.print()">🖨️ Imprimir</button>
-                        <button onclick="window.close()">Cerrar</button>
-                    </body></html>
-                `);
-                printWindow.document.close();
+            // Preguntar si quiere imprimir ticket
+            if (confirm('Venta completada con éxito. ¿Desea imprimir el ticket?')) {
+                imprimirTicket(ticket);
             } else {
-                alert('Venta completada con éxito');
+                alert('Venta registrada');
             }
         }
 
-        function generarTicket(venta, cart, total) {
-            const fecha = new Date(venta.fecha).toLocaleString();
-            let ticket = `╔════════════════════════════╗\n`;
-            ticket += `║        JANQ POS           ║\n`;
-            ticket += `║    ${fecha}    ║\n`;
-            ticket += `╠════════════════════════════╣\n`;
-            cart.forEach(i => {
-                ticket += `║ ${i.nombre} x${i.cantidad}            ║\n`;
-                ticket += `║ $${((i.precioVenta || 0) * i.cantidad).toFixed(2)}            ║\n`;
+        // ==================== UTILIDADES ====================
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
             });
-            ticket += `╠════════════════════════════╣\n`;
-            ticket += `║ TOTAL: $${total.toFixed(2)}          ║\n`;
-            ticket += `║ PAGO: ${venta.metodoPago.toUpperCase()}          ║\n`;
-            if (venta.metodoPago === 'efectivo') {
-                const cash = parseFloat(document.getElementById('cashAmount')?.value) || 0;
-                ticket += `║ EFECTIVO: $${cash.toFixed(2)}       ║\n`;
-                ticket += `║ VUELTO: $${(cash - total).toFixed(2)}         ║\n`;
-            }
-            ticket += `╚════════════════════════════╝\n`;
-            ticket += `¡Gracias por su compra!\n`;
-            return ticket;
         }
 
         // ==================== EVENTOS ====================
-        document.getElementById('searchInput')?.addEventListener('input', () => {
+        document.getElementById('searchInput')?.addEventListener('input', function() {
             renderProducts();
         });
         document.getElementById('cashAmount')?.addEventListener('input', calculateChange);
