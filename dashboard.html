@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JanQ - Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -16,16 +16,25 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         .logo { display: flex; align-items: center; gap: 12px; }
         .logo i { font-size: 28px; color: #10B981; }
         .logo h1 { font-size: 22px; }
-        .user-info { display: flex; align-items: center; gap: 15px; }
+        .user-info { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+        .plan-badge {
+            background: #10B981;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
         .logout-btn {
             background: rgba(255,255,255,0.1);
             border: none;
             color: white;
-            padding: 6px 14px;
+            padding: 8px 16px;
             border-radius: 8px;
             cursor: pointer;
         }
@@ -50,6 +59,7 @@
         .nav-item:hover { background: #F1F5F9; color: #10B981; }
         .nav-item.active { background: #ECFDF5; color: #10B981; }
         .nav-item i { width: 24px; }
+        .nav-item.disabled { opacity: 0.5; cursor: not-allowed; background: none; }
         .content { flex: 1; padding: 24px 32px; background: #F8FAFC; }
         .module-pane { display: none; }
         .module-pane.active { display: block; }
@@ -77,6 +87,7 @@
     <div class="header">
         <div class="logo"><i class="fas fa-chart-line"></i><h1>JanQ ERP</h1></div>
         <div class="user-info">
+            <span class="plan-badge" id="userPlan">Cargando...</span>
             <span id="userName">Cargando...</span>
             <button class="logout-btn" id="logoutBtn">Salir</button>
         </div>
@@ -102,28 +113,44 @@
             <div id="module-configuracion" class="module-pane"><iframe src="modules/module-configuracion/index.html"></iframe></div>
         </div>
     </div>
+
+    <script src="db.js"></script>
     <script>
         const session = JSON.parse(localStorage.getItem('janq_session'));
         if (!session) {
             window.location.href = 'index.html';
         }
         
-        document.getElementById('userName').textContent = session.name;
+        // Inicializar base de datos del usuario
+        const db = new JanQDatabase(session.email);
         
-        const modules = [
-            { id: 'dashboard', name: 'Dashboard', icon: 'fa-chart-line' },
-            { id: 'ventas', name: 'Punto de Venta', icon: 'fa-shopping-cart' },
-            { id: 'inventario', name: 'Inventario', icon: 'fa-boxes' },
-            { id: 'compras', name: 'Compras', icon: 'fa-truck' },
-            { id: 'clientes', name: 'Clientes', icon: 'fa-users' },
-            { id: 'proveedores', name: 'Proveedores', icon: 'fa-building' },
-            { id: 'caja', name: 'Arqueo de Caja', icon: 'fa-cash-register' },
-            { id: 'reportes', name: 'Reportes', icon: 'fa-chart-bar' },
-            { id: 'configuracion', name: 'Configuración', icon: 'fa-cog' }
+        document.getElementById('userName').textContent = session.name;
+        document.getElementById('userPlan').textContent = session.plan || 'Básico';
+        
+        // Módulos con permisos según plan
+        const allModules = [
+            { id: 'dashboard', name: 'Dashboard', icon: 'fa-chart-line', requiredPlan: 'basic' },
+            { id: 'ventas', name: 'Punto de Venta', icon: 'fa-shopping-cart', requiredPlan: 'basic' },
+            { id: 'inventario', name: 'Inventario', icon: 'fa-boxes', requiredPlan: 'basic' },
+            { id: 'compras', name: 'Compras', icon: 'fa-truck', requiredPlan: 'pro' },
+            { id: 'clientes', name: 'Clientes', icon: 'fa-users', requiredPlan: 'basic' },
+            { id: 'proveedores', name: 'Proveedores', icon: 'fa-building', requiredPlan: 'pro' },
+            { id: 'caja', name: 'Arqueo de Caja', icon: 'fa-cash-register', requiredPlan: 'pro' },
+            { id: 'reportes', name: 'Reportes', icon: 'fa-chart-bar', requiredPlan: 'basic' },
+            { id: 'configuracion', name: 'Configuración', icon: 'fa-cog', requiredPlan: 'admin' }
         ];
         
+        const userPlan = session.plan || 'basic';
+        const isAdmin = session.role === 'admin';
+        
+        const availableModules = allModules.filter(m => {
+            if (m.requiredPlan === 'admin') return isAdmin;
+            if (m.requiredPlan === 'pro') return userPlan === 'pro' || isAdmin;
+            return true;
+        });
+        
         const sidebar = document.getElementById('sidebar');
-        sidebar.innerHTML = modules.map(mod => `
+        sidebar.innerHTML = availableModules.map(mod => `
             <div class="nav-item" data-module="${mod.id}">
                 <i class="fas ${mod.icon}"></i>
                 <span>${mod.name}</span>
@@ -131,18 +158,14 @@
         `).join('');
         
         function loadStats() {
-            const productos = JSON.parse(localStorage.getItem('janq_productos')) || [];
-            const ventas = JSON.parse(localStorage.getItem('janq_ventas')) || [];
-            const clientes = JSON.parse(localStorage.getItem('janq_clientes')) || [];
-            const proveedores = JSON.parse(localStorage.getItem('janq_proveedores')) || [];
-            
-            const stats = document.getElementById('dashboardStats');
-            if (stats) {
-                stats.innerHTML = `
-                    <div class="stat-card"><i class="fas fa-box"></i><h3>${productos.length}</h3><p>Productos</p></div>
-                    <div class="stat-card"><i class="fas fa-shopping-cart"></i><h3>${ventas.length}</h3><p>Ventas</p></div>
-                    <div class="stat-card"><i class="fas fa-users"></i><h3>${clientes.length}</h3><p>Clientes</p></div>
-                    <div class="stat-card"><i class="fas fa-building"></i><h3>${proveedores.length}</h3><p>Proveedores</p></div>
+            const stats = db.getStats();
+            const statsDiv = document.getElementById('dashboardStats');
+            if (statsDiv) {
+                statsDiv.innerHTML = `
+                    <div class="stat-card"><i class="fas fa-box"></i><h3>${stats.totalProductos}</h3><p>Productos</p></div>
+                    <div class="stat-card"><i class="fas fa-shopping-cart"></i><h3>${stats.totalVentas}</h3><p>Ventas</p></div>
+                    <div class="stat-card"><i class="fas fa-users"></i><h3>${stats.totalClientes}</h3><p>Clientes</p></div>
+                    <div class="stat-card"><i class="fas fa-building"></i><h3>${stats.totalProveedores}</h3><p>Proveedores</p></div>
                 `;
             }
         }
@@ -157,9 +180,9 @@
                 document.getElementById(`module-${moduleId}`).classList.add('active');
                 
                 if (moduleId !== 'dashboard') {
-                    let analytics = JSON.parse(localStorage.getItem('janq_analytics')) || [];
+                    let analytics = db.getDB().collections.analytics;
                     analytics.push({ user: session.email, module: moduleId, timestamp: new Date().toISOString() });
-                    localStorage.setItem('janq_analytics', JSON.stringify(analytics));
+                    db.saveDB(db.getDB());
                 }
             });
         });
@@ -170,6 +193,7 @@
         });
         
         window.loadStats = loadStats;
+        window.db = db;
     </script>
 </body>
 </html>
