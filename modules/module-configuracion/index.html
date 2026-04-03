@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JanQ - Configuración</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: white; padding: 24px; }
+        .config-card { background: #F8FAFC; border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+        .config-card h3 { margin-bottom: 20px; color: #1E293B; }
+        .config-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #E2E8F0; }
+        .btn-danger { background: #DC2626; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+        .btn-secondary { background: #64748B; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+        input, select { padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; }
+        .success-msg { background: #ECFDF5; color: #10B981; padding: 10px; border-radius: 8px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h2><i class="fas fa-cog"></i> Configuración del Sistema</h2>
+    
+    <div class="config-card">
+        <h3><i class="fas fa-store"></i> Datos de la empresa</h3>
+        <div class="config-item">
+            <span>Nombre de la empresa</span>
+            <input type="text" id="empresaNombre" placeholder="Nombre" style="width: 250px;">
+        </div>
+        <div class="config-item">
+            <span>Teléfono</span>
+            <input type="text" id="empresaTelefono" placeholder="Teléfono" style="width: 250px;">
+        </div>
+        <div class="config-item">
+            <span>Dirección</span>
+            <input type="text" id="empresaDireccion" placeholder="Dirección" style="width: 250px;">
+        </div>
+        <div class="config-item">
+            <span>Email</span>
+            <input type="email" id="empresaEmail" placeholder="Email" style="width: 250px;">
+        </div>
+        <button class="btn-secondary" onclick="guardarConfiguracion()" style="margin-top: 15px;">Guardar configuración</button>
+        <div id="configMsg"></div>
+    </div>
+    
+    <div class="config-card">
+        <h3><i class="fas fa-database"></i> Datos del sistema</h3>
+        <div class="config-item">
+            <span>Respaldo de datos</span>
+            <button class="btn-secondary" onclick="exportarDatos()">Exportar respaldo</button>
+        </div>
+        <div class="config-item">
+            <span>Restaurar respaldo</span>
+            <input type="file" id="restoreFile" accept=".json" style="width: auto;">
+            <button class="btn-secondary" onclick="restaurarDatos()">Restaurar</button>
+        </div>
+        <div class="config-item">
+            <span>Limpiar todos los datos</span>
+            <button class="btn-danger" onclick="limpiarDatos()">Limpiar todo</button>
+        </div>
+    </div>
+    
+    <div class="config-card">
+        <h3><i class="fas fa-users"></i> Usuarios del sistema</h3>
+        <div class="config-item">
+            <span>Agregar nuevo usuario</span>
+            <div>
+                <input type="email" id="newUserEmail" placeholder="Email" style="width: 200px;">
+                <input type="password" id="newUserPass" placeholder="Contraseña" style="width: 150px;">
+                <select id="newUserRole" style="width: 120px;">
+                    <option value="admin">Admin</option>
+                    <option value="user">Usuario</option>
+                </select>
+                <button class="btn-secondary" onclick="agregarUsuario()">Agregar</button>
+            </div>
+        </div>
+        <div id="usersList"></div>
+    </div>
+    
+    <script>
+        // Cargar configuración guardada
+        function cargarConfiguracion() {
+            const config = JSON.parse(localStorage.getItem('janq_config')) || {};
+            document.getElementById('empresaNombre').value = config.empresaNombre || '';
+            document.getElementById('empresaTelefono').value = config.empresaTelefono || '';
+            document.getElementById('empresaDireccion').value = config.empresaDireccion || '';
+            document.getElementById('empresaEmail').value = config.empresaEmail || '';
+        }
+        
+        function guardarConfiguracion() {
+            const config = {
+                empresaNombre: document.getElementById('empresaNombre').value,
+                empresaTelefono: document.getElementById('empresaTelefono').value,
+                empresaDireccion: document.getElementById('empresaDireccion').value,
+                empresaEmail: document.getElementById('empresaEmail').value
+            };
+            localStorage.setItem('janq_config', JSON.stringify(config));
+            const msg = document.getElementById('configMsg');
+            msg.innerHTML = '<div class="success-msg">Configuración guardada correctamente</div>';
+            setTimeout(() => msg.innerHTML = '', 3000);
+        }
+        
+        function exportarDatos() {
+            const data = {
+                productos: JSON.parse(localStorage.getItem('janq_productos')) || [],
+                ventas: JSON.parse(localStorage.getItem('janq_ventas')) || [],
+                clientes: JSON.parse(localStorage.getItem('janq_clientes')) || [],
+                proveedores: JSON.parse(localStorage.getItem('janq_proveedores')) || [],
+                compras: JSON.parse(localStorage.getItem('janq_compras')) || [],
+                config: JSON.parse(localStorage.getItem('janq_config')) || {}
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `janq_respaldo_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            alert('Respaldo exportado correctamente');
+        }
+        
+        function restaurarDatos() {
+            const file = document.getElementById('restoreFile').files[0];
+            if (!file) { alert('Selecciona un archivo de respaldo'); return; }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = JSON.parse(e.target.result);
+                if (data.productos) localStorage.setItem('janq_productos', JSON.stringify(data.productos));
+                if (data.ventas) localStorage.setItem('janq_ventas', JSON.stringify(data.ventas));
+                if (data.clientes) localStorage.setItem('janq_clientes', JSON.stringify(data.clientes));
+                if (data.proveedores) localStorage.setItem('janq_proveedores', JSON.stringify(data.proveedores));
+                if (data.compras) localStorage.setItem('janq_compras', JSON.stringify(data.compras));
+                if (data.config) localStorage.setItem('janq_config', JSON.stringify(data.config));
+                alert('Datos restaurados correctamente');
+                location.reload();
+            };
+            reader.readAsText(file);
+        }
+        
+        function limpiarDatos() {
+            if (confirm('¿Eliminar TODOS los datos del sistema? Esta acción no se puede deshacer.')) {
+                localStorage.clear();
+                alert('Todos los datos han sido eliminados');
+                location.reload();
+            }
+        }
+        
+        function cargarUsuarios() {
+            const users = JSON.parse(localStorage.getItem('janq_users')) || {};
+            const listDiv = document.getElementById('usersList');
+            listDiv.innerHTML = Object.entries(users).map(([email, user]) => `
+                <div class="config-item">
+                    <span>${email} - ${user.name} (${user.role})</span>
+                    ${email !== 'admin@janq.com' ? `<button class="btn-danger" onclick="eliminarUsuario('${email}')">Eliminar</button>` : '<span>Admin principal</span>'}
+                </div>
+            `).join('');
+        }
+        
+        function agregarUsuario() {
+            const email = document.getElementById('newUserEmail').value;
+            const password = document.getElementById('newUserPass').value;
+            const role = document.getElementById('newUserRole').value;
+            if (!email || !password) { alert('Complete todos los campos'); return; }
+            const users = JSON.parse(localStorage.getItem('janq_users')) || {};
+            if (users[email]) { alert('El usuario ya existe'); return; }
+            users[email] = { password, name: email.split('@')[0], role };
+            localStorage.setItem('janq_users', JSON.stringify(users));
+            alert('Usuario agregado');
+            cargarUsuarios();
+        }
+        
+        function eliminarUsuario(email) {
+            const users = JSON.parse(localStorage.getItem('janq_users')) || {};
+            delete users[email];
+            localStorage.setItem('janq_users', JSON.stringify(users));
+            cargarUsuarios();
+        }
+        
+        cargarConfiguracion();
+        cargarUsuarios();
+    </script>
+</body>
+</html>
