@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>JanQ ERP - Plataforma de Gestión</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,31 +15,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        /* Decoración de fondo */
-        body::before {
-            content: '';
-            position: absolute;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%);
-            top: -100px;
-            right: -100px;
-            border-radius: 50%;
-        }
-        body::after {
-            content: '';
-            position: absolute;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(16,185,129,0.05) 0%, transparent 70%);
-            bottom: -150px;
-            left: -150px;
-            border-radius: 50%;
+            padding: 40px 20px;
         }
         
         .login-container {
@@ -47,10 +23,24 @@
             max-width: 480px;
             background: white;
             border-radius: 32px;
-            overflow: hidden;
+            overflow-y: auto;
+            max-height: 90vh;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
             position: relative;
             z-index: 1;
+        }
+        
+        /* Scroll personalizado */
+        .login-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .login-container::-webkit-scrollbar-track {
+            background: #F1F5F9;
+            border-radius: 3px;
+        }
+        .login-container::-webkit-scrollbar-thumb {
+            background: #10B981;
+            border-radius: 3px;
         }
         
         .login-header {
@@ -221,6 +211,16 @@
         .tab-content {
             animation: fadeIn 0.3s ease;
         }
+        
+        /* Responsive */
+        @media (max-width: 500px) {
+            body { padding: 20px 16px; }
+            .login-header { padding: 30px 20px; }
+            .login-body { padding: 24px 20px; }
+            .logo-icon { width: 55px; height: 55px; }
+            .logo-icon i { font-size: 28px; }
+            .login-header h1 { font-size: 24px; }
+        }
     </style>
 </head>
 <body>
@@ -242,7 +242,7 @@
             <div id="alertMsg"></div>
             
             <!-- Login Tab -->
-            <div id="loginTab">
+            <div id="loginTab" class="tab-content">
                 <form id="loginForm">
                     <div class="form-group">
                         <label>Correo electrónico</label>
@@ -263,7 +263,7 @@
             </div>
             
             <!-- Register Tab -->
-            <div id="registerTab" style="display:none;">
+            <div id="registerTab" class="tab-content" style="display:none;">
                 <form id="registerForm">
                     <div class="form-group">
                         <label>Nombre completo</label>
