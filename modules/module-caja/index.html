@@ -2,31 +2,387 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>JanQ - Caja</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JanQ - Arqueo de Caja Contable</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; padding: 20px; background: white; }
-        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-        .card { background: #f8fafc; padding: 20px; border-radius: 16px; text-align: center; }
-        .card h3 { font-size: 32px; color: #10B981; }
-        .btn { background: #10B981; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 20px; }
-        input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #F1F5F9; padding: 24px; }
+        .header { margin-bottom: 24px; }
+        .header h2 { font-size: 24px; display: flex; align-items: center; gap: 12px; }
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            border: 1px solid #E2E8F0;
+        }
+        .filter-group { display: flex; flex-direction: column; gap: 6px; }
+        .filter-group label { font-size: 12px; font-weight: 600; color: #475569; }
+        .filter-group input, .filter-group select { padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-family: 'Inter'; }
+        .btn { background: #10B981; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-secondary { background: #64748B; }
+        .btn-outline { background: white; border: 1px solid #E2E8F0; color: #1E293B; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid #E2E8F0;
+            text-align: center;
+        }
+        .stat-card h3 { font-size: 28px; font-weight: 700; color: #10B981; }
+        .stat-card p { color: #64748B; margin-top: 4px; }
+        .card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #E2E8F0;
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 16px 20px;
+            background: #F8FAFC;
+            border-bottom: 1px solid #E2E8F0;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .card-body { padding: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #E2E8F0; }
+        th { background: #F8FAFC; font-weight: 600; }
+        .arqueo-form { display: flex; flex-direction: column; gap: 16px; max-width: 400px; }
+        .arqueo-form input, .arqueo-form textarea { padding: 10px; border: 1px solid #E2E8F0; border-radius: 8px; }
+        .difference { font-size: 18px; font-weight: 700; padding: 12px; border-radius: 12px; text-align: center; margin-top: 16px; }
+        .difference.superavit { background: #DCFCE7; color: #166534; }
+        .difference.faltante { background: #FEF2F2; color: #DC2626; }
+        .difference.correcto { background: #ECFDF5; color: #10B981; }
+        @media (max-width: 700px) { .stats-grid { grid-template-columns: repeat(2,1fr); } }
     </style>
 </head>
 <body>
-    <h2>Arqueo de Caja</h2>
-    <div class="stats"><div class="card"><i class="fas fa-shopping-cart"></i><h3 id="ventasHoy">0</h3><p>Ventas hoy</p></div><div class="card"><i class="fas fa-dollar-sign"></i><h3 id="ingresosHoy">$0</h3><p>Ingresos hoy</p></div><div class="card"><i class="fas fa-cash-register"></i><h3 id="efectivoEsperado">$0</h3><p>Efectivo esperado</p></div></div>
-    <div><input type="number" id="efectivoContado" placeholder="Efectivo contado"><button class="btn" onclick="arqueo()">Realizar arqueo</button></div>
-    <div id="resultado" style="margin-top: 20px;"></div>
+    <div class="header">
+        <h2><i class="fas fa-cash-register"></i> Arqueo de Caja</h2>
+        <p>Control contable de ventas y diferencias de efectivo</p>
+    </div>
+
+    <!-- Filtros por fecha -->
+    <div class="filters">
+        <div class="filter-group">
+            <label>Desde</label>
+            <input type="date" id="fechaDesde">
+        </div>
+        <div class="filter-group">
+            <label>Hasta</label>
+            <input type="date" id="fechaHasta">
+        </div>
+        <div class="filter-group">
+            <label>&nbsp;</label>
+            <button class="btn" id="btnFiltrar"><i class="fas fa-search"></i> Aplicar filtro</button>
+        </div>
+        <div class="filter-group">
+            <label>&nbsp;</label>
+            <button class="btn btn-secondary" id="btnExportarVentas"><i class="fas fa-file-excel"></i> Exportar ventas</button>
+        </div>
+    </div>
+
+    <!-- Resumen de ventas del período -->
+    <div class="stats-grid" id="resumenVentas">
+        <div class="stat-card"><h3 id="totalVentasPeriodo">0</h3><p>Ventas realizadas</p></div>
+        <div class="stat-card"><h3 id="montoTotalPeriodo">$0</h3><p>Monto total (esperado)</p></div>
+        <div class="stat-card"><h3 id="promedioVenta">$0</h3><p>Ticket promedio</p></div>
+        <div class="stat-card"><h3 id="metodosPago">0</h3><p>Métodos de pago</p></div>
+    </div>
+
+    <!-- Tabla de ventas detallada -->
+    <div class="card">
+        <div class="card-header">
+            <span><i class="fas fa-list"></i> Ventas del período</span>
+            <span class="btn-outline" style="padding:4px 12px; font-size:12px;" id="toggleDetalle">Ocultar detalle</span>
+        </div>
+        <div class="card-body" id="detalleVentas" style="display: block;">
+            <div style="overflow-x: auto;">
+                <table id="ventasTable">
+                    <thead><tr><th>Fecha</th><th>Cliente</th><th>Método</th><th>Total</th></tr></thead>
+                    <tbody id="ventasBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de arqueo -->
+    <div class="card">
+        <div class="card-header">
+            <span><i class="fas fa-coins"></i> Registrar arqueo</span>
+        </div>
+        <div class="card-body">
+            <div class="arqueo-form">
+                <div class="filter-group">
+                    <label>Fecha del arqueo</label>
+                    <input type="date" id="fechaArqueo">
+                </div>
+                <div class="filter-group">
+                    <label>Efectivo contado (en efectivo)</label>
+                    <input type="number" id="efectivoContado" step="0.01" placeholder="0.00">
+                </div>
+                <div class="filter-group">
+                    <label>Observaciones (opcional)</label>
+                    <textarea id="observaciones" rows="2" placeholder="Ej: Diferencia por billete roto, etc."></textarea>
+                </div>
+                <button class="btn" id="btnRegistrarArqueo"><i class="fas fa-save"></i> Registrar arqueo</button>
+                <div id="resultadoArqueo" class="difference" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de arqueos -->
+    <div class="card">
+        <div class="card-header">
+            <span><i class="fas fa-history"></i> Historial de arqueos</span>
+            <button class="btn-outline" id="btnExportarArqueos" style="padding:4px 12px;"><i class="fas fa-download"></i> Exportar historial</button>
+        </div>
+        <div class="card-body">
+            <div style="overflow-x: auto;">
+                <table id="historialArqueosTable">
+                    <thead><tr><th>Fecha arqueo</th><th>Período</th><th>Ventas esperadas</th><th>Efectivo contado</th><th>Diferencia</th><th>Observaciones</th></tr></thead>
+                    <tbody id="historialArqueosBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const ventas = JSON.parse(localStorage.getItem('janq_ventas')) || [];
-        const hoy = new Date().toDateString();
-        const ventasHoy = ventas.filter(v => new Date(v.fecha).toDateString() === hoy);
-        const total = ventasHoy.reduce((s, v) => s + v.total, 0);
-        document.getElementById('ventasHoy').textContent = ventasHoy.length;
-        document.getElementById('ingresosHoy').textContent = `$${total}`;
-        document.getElementById('efectivoEsperado').textContent = `$${total}`;
-        function arqueo() { const contado = parseFloat(document.getElementById('efectivoContado').value); const diff = contado - total; if(Math.abs(diff) < 0.01) document.getElementById('resultado').innerHTML = '<div style="background:#ECFDF5; padding:15px; border-radius:12px; color:#10B981;">✅ Arqueo correcto</div>'; else if(diff > 0) document.getElementById('resultado').innerHTML = `<div style="background:#FEF3C7; padding:15px; border-radius:12px;">⚠️ Sobrante: $${diff.toFixed(2)}</div>`; else document.getElementById('resultado').innerHTML = `<div style="background:#FEF2F2; padding:15px; border-radius:12px;">❌ Faltante: $${Math.abs(diff).toFixed(2)}</div>`; }
+        // ==================== DATA ====================
+        let ventas = [];
+        let arqueos = [];
+
+        // Inicializar fechas por defecto: hoy
+        function setDefaultDates() {
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaDesde').value = hoy;
+            document.getElementById('fechaHasta').value = hoy;
+            document.getElementById('fechaArqueo').value = hoy;
+        }
+
+        function loadData() {
+            ventas = JSON.parse(localStorage.getItem('janq_ventas')) || [];
+            arqueos = JSON.parse(localStorage.getItem('janq_arqueos')) || [];
+        }
+
+        function saveArqueos() {
+            localStorage.setItem('janq_arqueos', JSON.stringify(arqueos));
+        }
+
+        // ==================== FILTRADO DE VENTAS ====================
+        function getVentasPorPeriodo(desde, hasta) {
+            const desdeDate = new Date(desde);
+            const hastaDate = new Date(hasta);
+            hastaDate.setHours(23, 59, 59);
+            return ventas.filter(v => {
+                const fechaVenta = new Date(v.fecha);
+                return fechaVenta >= desdeDate && fechaVenta <= hastaDate;
+            });
+        }
+
+        function actualizarResumenYTabla(desde, hasta) {
+            const ventasFiltradas = getVentasPorPeriodo(desde, hasta);
+            const totalVentas = ventasFiltradas.length;
+            const montoTotal = ventasFiltradas.reduce((sum, v) => sum + (v.total || 0), 0);
+            const promedio = totalVentas > 0 ? montoTotal / totalVentas : 0;
+            const metodos = new Set(ventasFiltradas.map(v => v.metodoPago || 'efectivo'));
+            
+            document.getElementById('totalVentasPeriodo').innerText = totalVentas;
+            document.getElementById('montoTotalPeriodo').innerText = `$${montoTotal.toFixed(2)}`;
+            document.getElementById('promedioVenta').innerText = `$${promedio.toFixed(2)}`;
+            document.getElementById('metodosPago').innerText = metodos.size;
+            
+            // Tabla detallada
+            const tbody = document.getElementById('ventasBody');
+            if (ventasFiltradas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">No hay ventas en el período</td></tr>';
+            } else {
+                tbody.innerHTML = ventasFiltradas.map(v => `
+                    <tr>
+                        <td>${new Date(v.fecha).toLocaleString()}</td>
+                        <td>${v.clienteNombre || 'Consumidor final'}</td>
+                        <td>${(v.metodoPago || 'efectivo').toUpperCase()}</td>
+                        <td>$${(v.total || 0).toFixed(2)}</td>
+                    </tr>
+                `).join('');
+            }
+            
+            // Guardar período actual para usarlo en arqueo
+            window.periodoActual = { desde, hasta, montoTotal, totalVentas };
+            return { montoTotal, totalVentas };
+        }
+
+        // ==================== ARQUEO ====================
+        function calcularDiferencia(esperado, contado) {
+            return contado - esperado;
+        }
+
+        function mostrarDiferencia(diferencia) {
+            const div = document.getElementById('resultadoArqueo');
+            div.style.display = 'block';
+            if (Math.abs(diferencia) < 0.01) {
+                div.className = 'difference correcto';
+                div.innerHTML = `<i class="fas fa-check-circle"></i> Arqueo exacto: La diferencia es $0.00`;
+            } else if (diferencia > 0) {
+                div.className = 'difference superavit';
+                div.innerHTML = `<i class="fas fa-arrow-up"></i> Superávit: El efectivo contado supera las ventas en $${diferencia.toFixed(2)}. Revisar ingresos extra.`;
+            } else {
+                div.className = 'difference faltante';
+                div.innerHTML = `<i class="fas fa-arrow-down"></i> Faltante: Faltan $${Math.abs(diferencia).toFixed(2)} respecto a las ventas. Revisar posibles robos o errores.`;
+            }
+        }
+
+        function registrarArqueo() {
+            const fechaArqueo = document.getElementById('fechaArqueo').value;
+            const efectivoContado = parseFloat(document.getElementById('efectivoContado').value) || 0;
+            const observaciones = document.getElementById('observaciones').value;
+            
+            if (!fechaArqueo) {
+                alert('Seleccione la fecha del arqueo');
+                return;
+            }
+            if (!window.periodoActual) {
+                alert('Primero filtre las ventas del período');
+                return;
+            }
+            const { desde, hasta, montoTotal, totalVentas } = window.periodoActual;
+            const diferencia = efectivoContado - montoTotal;
+            
+            const nuevoArqueo = {
+                id: Date.now(),
+                fechaArqueo: fechaArqueo,
+                periodoDesde: desde,
+                periodoHasta: hasta,
+                ventasEsperadas: montoTotal,
+                cantidadVentas: totalVentas,
+                efectivoContado: efectivoContado,
+                diferencia: diferencia,
+                observaciones: observaciones,
+                createdAt: new Date().toISOString()
+            };
+            arqueos.push(nuevoArqueo);
+            saveArqueos();
+            mostrarDiferencia(diferencia);
+            cargarHistorialArqueos();
+            // Limpiar formulario (opcional)
+            document.getElementById('efectivoContado').value = '';
+            document.getElementById('observaciones').value = '';
+            alert('Arqueo registrado correctamente');
+        }
+
+        // ==================== HISTORIAL ====================
+        function cargarHistorialArqueos() {
+            const tbody = document.getElementById('historialArqueosBody');
+            if (arqueos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">No hay arqueos registrados</td></tr>';
+                return;
+            }
+            const sorted = [...arqueos].reverse();
+            tbody.innerHTML = sorted.map(a => `
+                <tr>
+                    <td>${new Date(a.fechaArqueo).toLocaleDateString()}</td>
+                    <td>${new Date(a.periodoDesde).toLocaleDateString()} - ${new Date(a.periodoHasta).toLocaleDateString()}</td>
+                    <td>$${a.ventasEsperadas.toFixed(2)}</td>
+                    <td>$${a.efectivoContado.toFixed(2)}</td>
+                    <td style="color:${a.diferencia >= 0 ? '#10B981' : '#DC2626'}">${a.diferencia >= 0 ? '+' : ''}$${a.diferencia.toFixed(2)}</td>
+                    <td>${a.observaciones || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // ==================== EXPORTAR ====================
+        function exportarVentas() {
+            const desde = document.getElementById('fechaDesde').value;
+            const hasta = document.getElementById('fechaHasta').value;
+            const ventasFiltradas = getVentasPorPeriodo(desde, hasta);
+            if (ventasFiltradas.length === 0) {
+                alert('No hay ventas en el período seleccionado');
+                return;
+            }
+            const data = ventasFiltradas.map(v => ({
+                Fecha: new Date(v.fecha).toLocaleString(),
+                Cliente: v.clienteNombre || 'Consumidor final',
+                'Método pago': v.metodoPago || 'efectivo',
+                Total: v.total || 0,
+                Items: v.items?.length || 0
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Ventas');
+            XLSX.writeFile(wb, `ventas_${desde}_a_${hasta}.xlsx`);
+        }
+
+        function exportarArqueos() {
+            if (arqueos.length === 0) {
+                alert('No hay arqueos registrados');
+                return;
+            }
+            const data = arqueos.map(a => ({
+                'Fecha arqueo': new Date(a.fechaArqueo).toLocaleDateString(),
+                'Período desde': new Date(a.periodoDesde).toLocaleDateString(),
+                'Período hasta': new Date(a.periodoHasta).toLocaleDateString(),
+                'Ventas esperadas': a.ventasEsperadas,
+                'Efectivo contado': a.efectivoContado,
+                Diferencia: a.diferencia,
+                Observaciones: a.observaciones || ''
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Arqueos');
+            XLSX.writeFile(wb, `arqueos_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        // ==================== EVENTOS ====================
+        document.getElementById('btnFiltrar').addEventListener('click', () => {
+            const desde = document.getElementById('fechaDesde').value;
+            const hasta = document.getElementById('fechaHasta').value;
+            if (!desde || !hasta) {
+                alert('Seleccione ambas fechas');
+                return;
+            }
+            actualizarResumenYTabla(desde, hasta);
+        });
+
+        document.getElementById('btnRegistrarArqueo').addEventListener('click', registrarArqueo);
+        document.getElementById('btnExportarVentas').addEventListener('click', exportarVentas);
+        document.getElementById('btnExportarArqueos').addEventListener('click', exportarArqueos);
+        
+        let detalleVisible = true;
+        document.getElementById('toggleDetalle').addEventListener('click', function() {
+            const detalleDiv = document.getElementById('detalleVentas');
+            detalleVisible = !detalleVisible;
+            detalleDiv.style.display = detalleVisible ? 'block' : 'none';
+            this.innerText = detalleVisible ? 'Ocultar detalle' : 'Mostrar detalle';
+        });
+
+        // ==================== INICIALIZACIÓN ====================
+        setDefaultDates();
+        loadData();
+        cargarHistorialArqueos();
+        // Cargar ventas del día actual por defecto
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('fechaDesde').value = hoy;
+        document.getElementById('fechaHasta').value = hoy;
+        actualizarResumenYTabla(hoy, hoy);
     </script>
 </body>
 </html>
