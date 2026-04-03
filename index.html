@@ -122,16 +122,42 @@
                 <button type="submit" class="btn-login">Acceder al sistema</button>
             </form>
             <div class="demo-info">
-                <i class="fas fa-info-circle"></i> Admin: admin@janq.com / admin123
+                <i class="fas fa-info-circle"></i> Usuario: janmerfjq@gmail.com / 18902748
             </div>
         </div>
     </div>
     <script src="db.js"></script>
     <script>
-        // Crear super admin si no existe
-        const users = JSON.parse(localStorage.getItem('janq_users')) || {};
-        if (!users['admin@janq.com']) {
-            janqAdmin.createUser('admin@janq.com', 'admin123', 'Super Administrador', 'super_admin', 'super_admin');
+        // Crear usuario por defecto
+        if (!localStorage.getItem('janq_users')) {
+            // Crear empresa por defecto
+            const companies = {};
+            const companyId = 'comp_' + Date.now();
+            companies[companyId] = {
+                id: companyId,
+                name: 'JanQ Demo',
+                plan: 'enterprise',
+                modules: ['ventas', 'inventario', 'clientes', 'proveedores', 'compras', 'caja', 'reportes'],
+                createdAt: new Date().toISOString(),
+                active: true
+            };
+            localStorage.setItem('janq_companies', JSON.stringify(companies));
+            
+            // Crear usuario super admin
+            const users = {
+                'janmerfjq@gmail.com': {
+                    email: 'janmerfjq@gmail.com',
+                    password: '18902748',
+                    name: 'Janmer Jacamo',
+                    role: 'super_admin',
+                    companyId: companyId,
+                    modules: ['ventas', 'inventario', 'clientes', 'proveedores', 'compras', 'caja', 'reportes'],
+                    createdAt: new Date().toISOString(),
+                    active: true
+                }
+            };
+            localStorage.setItem('janq_users', JSON.stringify(users));
+            console.log('Usuario creado: janmerfjq@gmail.com / 18902748');
         }
         
         document.getElementById('loginForm').addEventListener('submit', (e) => {
@@ -139,10 +165,16 @@
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             
-            const user = janqAdmin.authenticate(email, password);
+            const users = JSON.parse(localStorage.getItem('janq_users')) || {};
+            const user = users[email];
             
-            if (user) {
-                const session = { email: user.email, name: user.name, role: user.role, companyId: user.companyId };
+            if (user && user.password === password && user.active) {
+                const session = { 
+                    email: user.email, 
+                    name: user.name, 
+                    role: user.role, 
+                    companyId: user.companyId 
+                };
                 localStorage.setItem('janq_session', JSON.stringify(session));
                 
                 if (user.role === 'super_admin') {
@@ -157,8 +189,9 @@
             }
         });
         
-        if (localStorage.getItem('janq_session')) {
-            const session = JSON.parse(localStorage.getItem('janq_session'));
+        // Redirigir si ya hay sesión
+        const session = JSON.parse(localStorage.getItem('janq_session'));
+        if (session) {
             if (session.role === 'super_admin') window.location.href = 'admin.html';
             else window.location.href = 'dashboard.html';
         }
