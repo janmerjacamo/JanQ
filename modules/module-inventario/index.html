@@ -2,34 +2,432 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>JanQ - Inventario</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JanQ - Inventario con Kardex</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; padding: 20px; background: white; }
-        .btn { background: #10B981; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: #f5f5f5; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 20px; border-radius: 10px; width: 400px; }
-        input { width: 100%; padding: 8px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #F1F5F9; padding: 24px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 15px; }
+        .btn { background: #10B981; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-secondary { background: #64748B; }
+        .btn-danger { background: #EF4444; }
+        .search-box { padding: 10px; border: 1px solid #E2E8F0; border-radius: 8px; width: 250px; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #E2E8F0; }
+        th { background: #1E293B; color: white; font-weight: 600; }
+        .low-stock { background: #FEF2F2; color: #DC2626; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-content input, .modal-content select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 6px;
+            border-radius: 12px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .tab.active {
+            background: #10B981;
+            color: white;
+        }
+        .kardex-table { font-size: 13px; }
+        .kardex-table th { background: #475569; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid #E2E8F0;
+        }
+        .stat-card i { font-size: 28px; color: #10B981; margin-bottom: 8px; }
+        .stat-card h3 { font-size: 28px; font-weight: 700; }
     </style>
 </head>
 <body>
-    <h2>Inventario</h2>
-    <button class="btn" onclick="openModal()">+ Nuevo Producto</button>
-    <table id="table">
-        <thead><tr><th>Nombre</th><th>Código</th><th>Stock</th><th>Precio</th><th></th></tr></thead>
-        <tbody id="tbody"></tbody>
-    </table>
-    <div id="modal" class="modal"><div class="modal-content"><h3>Nuevo Producto</h3><input id="nombre" placeholder="Nombre"><input id="codigo" placeholder="Código"><input id="stock" placeholder="Stock"><input id="precio" placeholder="Precio"><button class="btn" onclick="save()">Guardar</button></div></div>
+    <div class="header">
+        <h2><i class="fas fa-boxes"></i> Inventario con Kardex</h2>
+        <div>
+            <input type="text" id="searchInput" class="search-box" placeholder="Buscar producto...">
+            <button class="btn" onclick="openImportModal()"><i class="fas fa-file-import"></i> Importar Excel</button>
+            <button class="btn" onclick="openProductModal()"><i class="fas fa-plus"></i> Nuevo Producto</button>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card"><i class="fas fa-box"></i><h3 id="totalProductos">0</h3><p>Total Productos</p></div>
+        <div class="stat-card"><i class="fas fa-chart-line"></i><h3 id="totalEntradas">0</h3><p>Entradas Totales</p></div>
+        <div class="stat-card"><i class="fas fa-chart-line"></i><h3 id="totalSalidas">0</h3><p>Salidas Totales</p></div>
+        <div class="stat-card"><i class="fas fa-exclamation-triangle"></i><h3 id="stockBajo">0</h3><p>Stock Bajo</p></div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('productos')">Productos</div>
+        <div class="tab" onclick="showTab('kardex')">Kardex de Movimientos</div>
+    </div>
+
+    <div id="tab-productos">
+        <div style="overflow-x: auto;">
+            <table id="productosTable">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th>Stock Actual</th>
+                        <th>Precio Compra</th>
+                        <th>Precio Venta</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tab-kardex" style="display: none;">
+        <div style="margin-bottom: 16px;">
+            <select id="kardexProducto" style="padding: 10px; border-radius: 8px; width: 300px;">
+                <option value="">Todos los productos</option>
+            </select>
+            <button class="btn btn-secondary" onclick="exportarKardexExcel()" style="margin-left: 10px;"><i class="fas fa-file-excel"></i> Exportar Kardex a Excel</button>
+        </div>
+        <div style="overflow-x: auto; max-height: 500px; overflow-y: auto;">
+            <table class="kardex-table" id="kardexTable">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Producto</th>
+                        <th>Tipo</th>
+                        <th>Entrada</th>
+                        <th>Salida</th>
+                        <th>Stock Actual</th>
+                        <th>Referencia</th>
+                    </tr>
+                </thead>
+                <tbody id="kardexBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Producto -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <h3>Nuevo Producto</h3>
+            <input type="text" id="codigo" placeholder="Código SKU">
+            <input type="text" id="nombre" placeholder="Nombre del producto">
+            <input type="text" id="categoria" placeholder="Categoría">
+            <input type="number" id="stockInicial" placeholder="Stock inicial" value="0">
+            <input type="number" id="precioCompra" placeholder="Precio de compra">
+            <input type="number" id="precioVenta" placeholder="Precio de venta">
+            <button class="btn" onclick="saveProduct()" style="width:100%">Guardar Producto</button>
+            <button class="btn btn-secondary" onclick="closeProductModal()" style="width:100%; margin-top:10px">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal Importar Excel -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <h3>Importar Productos desde Excel</h3>
+            <p>Formato esperado: Código, Nombre, Categoría, Stock, Precio Compra, Precio Venta</p>
+            <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
+            <button class="btn" onclick="importarExcel()" style="width:100%; margin-top:10px">Importar</button>
+            <button class="btn btn-secondary" onclick="closeImportModal()" style="width:100%; margin-top:10px">Cancelar</button>
+        </div>
+    </div>
+
     <script>
+        // Estructuras de datos
         let productos = JSON.parse(localStorage.getItem('janq_productos')) || [];
-        function render() { document.getElementById('tbody').innerHTML = productos.map(p => `<tr><td>${p.nombre}</td><td>${p.codigo}</td><td>${p.stock}</td><td>$${p.precio}</td><td><button onclick="eliminar(${p.id})">Eliminar</button></td></tr>`).join(''); if(window.parent.loadStats) window.parent.loadStats(); }
-        function openModal() { document.getElementById('modal').style.display = 'flex'; }
-        function save() { productos.push({ id: Date.now(), nombre: document.getElementById('nombre').value, codigo: document.getElementById('codigo').value, stock: parseInt(document.getElementById('stock').value), precio: parseFloat(document.getElementById('precio').value) }); localStorage.setItem('janq_productos', JSON.stringify(productos)); render(); document.getElementById('modal').style.display = 'none'; }
-        function eliminar(id) { productos = productos.filter(p => p.id !== id); localStorage.setItem('janq_productos', JSON.stringify(productos)); render(); }
-        render();
+        let movimientos = JSON.parse(localStorage.getItem('janq_movimientos')) || [];
+
+        function saveToLocalStorage() {
+            localStorage.setItem('janq_productos', JSON.stringify(productos));
+            localStorage.setItem('janq_movimientos', JSON.stringify(movimientos));
+        }
+
+        function registrarMovimiento(productoId, tipo, cantidad, referencia, stockActual) {
+            const producto = productos.find(p => p.id === productoId);
+            if (producto) {
+                movimientos.push({
+                    id: Date.now(),
+                    productoId: productoId,
+                    productoNombre: producto.nombre,
+                    tipo: tipo,
+                    entrada: tipo === 'entrada' ? cantidad : 0,
+                    salida: tipo === 'salida' ? cantidad : 0,
+                    stockActual: stockActual,
+                    referencia: referencia,
+                    fecha: new Date().toISOString()
+                });
+                saveToLocalStorage();
+            }
+        }
+
+        function actualizarStock(productoId, cantidad, tipo, referencia) {
+            const producto = productos.find(p => p.id === productoId);
+            if (producto) {
+                if (tipo === 'entrada') {
+                    producto.stock += cantidad;
+                } else if (tipo === 'salida') {
+                    producto.stock -= cantidad;
+                }
+                registrarMovimiento(productoId, tipo, cantidad, referencia, producto.stock);
+                renderProductos();
+                renderKardex();
+                actualizarEstadisticas();
+                if (window.parent && window.parent.loadStats) window.parent.loadStats();
+            }
+        }
+
+        function renderProductos() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = productos.filter(p => p.nombre.toLowerCase().includes(search) || p.codigo.toLowerCase().includes(search));
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = filtered.map(p => `
+                <tr class="${p.stock < 5 ? 'low-stock' : ''}">
+                    <td>${p.codigo}</td>
+                    <td><strong>${p.nombre}</strong><br><small>${p.categoria || '-'}</small></td>
+                    <td>${p.categoria || '-'}</td>
+                    <td><strong style="font-size:18px; color:${p.stock < 5 ? '#DC2626' : '#10B981'}">${p.stock}</strong></td>
+                    <td>$${p.precioCompra}</td>
+                    <td>$${p.precioVenta}</td>
+                    <td>
+                        <button class="btn" style="background:#3B82F6; padding:5px 10px; margin:2px;" onclick="agregarEntrada(${p.id})"><i class="fas fa-arrow-down"></i> +</button>
+                        <button class="btn" style="background:#F59E0B; padding:5px 10px; margin:2px;" onclick="agregarSalida(${p.id})"><i class="fas fa-arrow-up"></i> -</button>
+                        <button class="btn btn-danger" style="padding:5px 10px; margin:2px;" onclick="eliminarProducto(${p.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            actualizarEstadisticas();
+        }
+
+        function agregarEntrada(id) {
+            const cantidad = prompt('Cantidad a agregar:');
+            if (cantidad && parseInt(cantidad) > 0) {
+                const referencia = prompt('Referencia (Ej: Compra a proveedor, Ajuste):', 'Compra');
+                actualizarStock(id, parseInt(cantidad), 'entrada', referencia);
+            }
+        }
+
+        function agregarSalida(id) {
+            const producto = productos.find(p => p.id === id);
+            const cantidad = prompt(`Cantidad a vender (Stock actual: ${producto.stock}):`);
+            if (cantidad && parseInt(cantidad) > 0 && parseInt(cantidad) <= producto.stock) {
+                const referencia = prompt('Referencia (Ej: Venta, Ajuste):', 'Venta');
+                actualizarStock(id, parseInt(cantidad), 'salida', referencia);
+            } else if (parseInt(cantidad) > producto.stock) {
+                alert('Stock insuficiente');
+            }
+        }
+
+        function eliminarProducto(id) {
+            if (confirm('¿Eliminar este producto?')) {
+                productos = productos.filter(p => p.id !== id);
+                saveToLocalStorage();
+                renderProductos();
+                renderKardex();
+            }
+        }
+
+        function renderKardex() {
+            const productoFiltro = document.getElementById('kardexProducto').value;
+            let filtrados = movimientos;
+            if (productoFiltro) {
+                filtrados = movimientos.filter(m => m.productoId == productoFiltro);
+            }
+            const kardexBody = document.getElementById('kardexBody');
+            kardexBody.innerHTML = filtrados.slice().reverse().map(m => `
+                <tr>
+                    <td>${new Date(m.fecha).toLocaleString()}</td>
+                    <td>${m.productoNombre}</td>
+                    <td><span style="background:${m.tipo === 'entrada' ? '#DCFCE7' : '#FEF3C7'}; padding:4px 8px; border-radius:12px;">${m.tipo === 'entrada' ? 'ENTRADA' : 'SALIDA'}</span></td>
+                    <td style="color:#10B981;">${m.entrada > 0 ? m.entrada : '-'}</td>
+                    <td style="color:#F59E0B;">${m.salida > 0 ? m.salida : '-'}</td>
+                    <td><strong>${m.stockActual}</strong></td>
+                    <td>${m.referencia || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function actualizarEstadisticas() {
+            const totalProductos = productos.length;
+            const totalEntradas = movimientos.filter(m => m.tipo === 'entrada').reduce((s, m) => s + m.entrada, 0);
+            const totalSalidas = movimientos.filter(m => m.tipo === 'salida').reduce((s, m) => s + m.salida, 0);
+            const stockBajo = productos.filter(p => p.stock < 5).length;
+            document.getElementById('totalProductos').textContent = totalProductos;
+            document.getElementById('totalEntradas').textContent = totalEntradas;
+            document.getElementById('totalSalidas').textContent = totalSalidas;
+            document.getElementById('stockBajo').textContent = stockBajo;
+        }
+
+        function cargarProductosEnSelect() {
+            const select = document.getElementById('kardexProducto');
+            select.innerHTML = '<option value="">Todos los productos</option>' + 
+                productos.map(p => `<option value="${p.id}">${p.nombre} (Stock: ${p.stock})</option>`).join('');
+        }
+
+        // CRUD Productos
+        function openProductModal() { document.getElementById('productModal').style.display = 'flex'; }
+        function closeProductModal() { document.getElementById('productModal').style.display = 'none'; }
+
+        function saveProduct() {
+            const producto = {
+                id: Date.now(),
+                codigo: document.getElementById('codigo').value,
+                nombre: document.getElementById('nombre').value,
+                categoria: document.getElementById('categoria').value,
+                stock: parseInt(document.getElementById('stockInicial').value) || 0,
+                precioCompra: parseFloat(document.getElementById('precioCompra').value) || 0,
+                precioVenta: parseFloat(document.getElementById('precioVenta').value) || 0
+            };
+            productos.push(producto);
+            if (producto.stock > 0) {
+                registrarMovimiento(producto.id, 'entrada', producto.stock, 'Stock inicial', producto.stock);
+            }
+            saveToLocalStorage();
+            renderProductos();
+            renderKardex();
+            cargarProductosEnSelect();
+            closeProductModal();
+            limpiarFormulario();
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('codigo').value = '';
+            document.getElementById('nombre').value = '';
+            document.getElementById('categoria').value = '';
+            document.getElementById('stockInicial').value = '0';
+            document.getElementById('precioCompra').value = '';
+            document.getElementById('precioVenta').value = '';
+        }
+
+        // Importar Excel
+        function openImportModal() { document.getElementById('importModal').style.display = 'flex'; }
+        function closeImportModal() { document.getElementById('importModal').style.display = 'none'; }
+
+        function importarExcel() {
+            const file = document.getElementById('excelFile').files[0];
+            if (!file) { alert('Seleccione un archivo'); return; }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet);
+                let importados = 0;
+                rows.forEach(row => {
+                    const codigo = row.Código || row.codigo || '';
+                    const nombre = row.Nombre || row.nombre || '';
+                    const categoria = row.Categoría || row.categoria || '';
+                    const stock = parseInt(row.Stock || row.stock) || 0;
+                    const precioCompra = parseFloat(row.PrecioCompra || row.precioCompra) || 0;
+                    const precioVenta = parseFloat(row.PrecioVenta || row.precioVenta) || 0;
+                    if (nombre && codigo) {
+                        const existe = productos.find(p => p.codigo === codigo);
+                        if (!existe) {
+                            const nuevoProducto = {
+                                id: Date.now() + importados,
+                                codigo: codigo,
+                                nombre: nombre,
+                                categoria: categoria,
+                                stock: stock,
+                                precioCompra: precioCompra,
+                                precioVenta: precioVenta
+                            };
+                            productos.push(nuevoProducto);
+                            if (stock > 0) {
+                                registrarMovimiento(nuevoProducto.id, 'entrada', stock, 'Importación Excel', stock);
+                            }
+                            importados++;
+                        }
+                    }
+                });
+                saveToLocalStorage();
+                renderProductos();
+                renderKardex();
+                cargarProductosEnSelect();
+                closeImportModal();
+                alert(`Importados ${importados} productos`);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function exportarKardexExcel() {
+            const filtro = document.getElementById('kardexProducto').value;
+            let data = movimientos;
+            if (filtro) {
+                data = movimientos.filter(m => m.productoId == filtro);
+            }
+            const exportData = data.map(m => ({
+                Fecha: new Date(m.fecha).toLocaleString(),
+                Producto: m.productoNombre,
+                Tipo: m.tipo === 'entrada' ? 'ENTRADA' : 'SALIDA',
+                Entrada: m.entrada,
+                Salida: m.salida,
+                Stock_Actual: m.stockActual,
+                Referencia: m.referencia || ''
+            }));
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Kardex');
+            XLSX.writeFile(wb, `kardex_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        function showTab(tab) {
+            document.getElementById('tab-productos').style.display = tab === 'productos' ? 'block' : 'none';
+            document.getElementById('tab-kardex').style.display = tab === 'kardex' ? 'block' : 'none';
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            if (tab === 'kardex') {
+                cargarProductosEnSelect();
+                renderKardex();
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('input', renderProductos);
+        document.getElementById('kardexProducto').addEventListener('change', renderKardex);
+        
+        renderProductos();
+        actualizarEstadisticas();
     </script>
 </body>
 </html>
