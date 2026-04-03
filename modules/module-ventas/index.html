@@ -22,27 +22,25 @@
         .product-card:hover { border-color: #10B981; background: #ECFDF5; }
         .product-card .name { font-weight: 600; }
         .product-card .price { color: #10B981; font-weight: 600; margin-top: 5px; }
-        .product-card .stock { font-size: 12px; color: #64748B; }
         .cart-container { border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px; background: #F8FAFC; }
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #E2E8F0; }
         .cart-item-qty { display: flex; align-items: center; gap: 10px; }
         .cart-item-qty button { background: #E2E8F0; border: none; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; }
         .cart-total { font-size: 28px; font-weight: 700; margin: 20px 0; text-align: right; }
         .btn-checkout { background: #10B981; color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; font-weight: 600; cursor: pointer; font-size: 16px; }
-        .cliente-info { margin-bottom: 15px; }
-        .cliente-info input { width: 100%; padding: 10px; border: 1px solid #E2E8F0; border-radius: 8px; }
+        .cliente-info input { width: 100%; padding: 10px; border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
     <h2><i class="fas fa-shopping-cart"></i> Punto de Venta</h2>
     <div class="pos-container">
         <div>
-            <input type="text" id="search" class="search-box" placeholder="Buscar producto por nombre o código...">
+            <input type="text" id="search" class="search-box" placeholder="Buscar producto...">
             <div id="productsGrid" class="products-grid"></div>
         </div>
         <div>
             <div class="cart-container">
-                <h3>Carrito de compras</h3>
+                <h3>Carrito</h3>
                 <div class="cliente-info">
                     <input type="text" id="clienteNombre" placeholder="Nombre del cliente (opcional)">
                 </div>
@@ -52,16 +50,18 @@
             </div>
         </div>
     </div>
+    <script src="../../db.js"></script>
     <script>
-        let productos = JSON.parse(localStorage.getItem('janq_productos')) || [];
+        const session = JSON.parse(localStorage.getItem('janq_session'));
+        if (!session) window.location.href = '../../index.html';
+        const db = new JanQDatabase(session.email);
+        
         let cart = [];
         
         function renderProducts() {
+            const productos = db.getProductos();
             const search = document.getElementById('search').value.toLowerCase();
-            const filtered = productos.filter(p => 
-                p.nombre.toLowerCase().includes(search) || 
-                p.codigo.toLowerCase().includes(search)
-            );
+            const filtered = productos.filter(p => p.nombre.toLowerCase().includes(search) || p.codigo.toLowerCase().includes(search));
             const grid = document.getElementById('productsGrid');
             grid.innerHTML = filtered.map(p => `
                 <div class="product-card" onclick="addToCart(${p.id})">
@@ -73,6 +73,7 @@
         }
         
         function addToCart(productId) {
+            const productos = db.getProductos();
             const product = productos.find(p => p.id === productId);
             if (!product || product.stock <= 0) return;
             
@@ -89,18 +90,15 @@
             const cartDiv = document.getElementById('cartItems');
             cartDiv.innerHTML = cart.map(item => `
                 <div class="cart-item">
-                    <div>
-                        <div><strong>${item.nombre}</strong></div>
-                        <div class="cart-item-qty">
-                            <button onclick="updateQty(${item.id}, -1)">-</button>
-                            <span>${item.cantidad}</span>
-                            <button onclick="updateQty(${item.id}, 1)">+</button>
-                        </div>
+                    <div><strong>${item.nombre}</strong></div>
+                    <div class="cart-item-qty">
+                        <button onclick="updateQty(${item.id}, -1)">-</button>
+                        <span>${item.cantidad}</span>
+                        <button onclick="updateQty(${item.id}, 1)">+</button>
+                        <div>$${(item.precioVenta * item.cantidad).toFixed(2)}</div>
                     </div>
-                    <div>$${(item.precioVenta * item.cantidad).toFixed(2)}</div>
                 </div>
             `).join('');
-            
             const total = cart.reduce((sum, i) => sum + (i.precioVenta * i.cantidad), 0);
             document.getElementById('cartTotal').innerHTML = `$${total.toFixed(2)}`;
         }
@@ -123,24 +121,22 @@
             
             // Actualizar stock
             cart.forEach(item => {
+                const productos = db.getProductos();
                 const product = productos.find(p => p.id === item.id);
-                if (product) product.stock -= item.cantidad;
+                if (product) {
+                    product.stock -= item.cantidad;
+                    db.updateProducto(item.id, { stock: product.stock });
+                }
             });
-            localStorage.setItem('janq_productos', JSON.stringify(productos));
             
             const venta = {
-                id: Date.now(),
-                fecha: new Date().toISOString(),
                 cliente: clienteNombre,
                 items: cart.map(i => ({ nombre: i.nombre, cantidad: i.cantidad, precio: i.precioVenta })),
                 subtotal: cart.reduce((sum, i) => sum + (i.precioVenta * i.cantidad), 0),
                 total: cart.reduce((sum, i) => sum + (i.precioVenta * i.cantidad), 0)
             };
             
-            let ventas = JSON.parse(localStorage.getItem('janq_ventas')) || [];
-            ventas.push(venta);
-            localStorage.setItem('janq_ventas', JSON.stringify(ventas));
-            
+            db.addVenta(venta);
             cart = [];
             renderCart();
             renderProducts();
