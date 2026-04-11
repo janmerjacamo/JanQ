@@ -7,7 +7,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; padding: 20px; background: white; }
         .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
-        .card { background: #f8fafc; padding: 20px; border-radius: 16px; text-align: center; }
+        .card { background: #F8FAFC; padding: 20px; border-radius: 16px; text-align: center; }
         .card h3 { font-size: 28px; color: #10B981; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
@@ -17,17 +17,51 @@
 <body>
     <h2>Reportes</h2>
     <button class="btn" onclick="exportarCSV()">Exportar CSV</button>
-    <div class="stats"><div class="card"><i class="fas fa-box"></i><h3 id="totalProductos">0</h3><p>Productos</p></div><div class="card"><i class="fas fa-shopping-cart"></i><h3 id="totalVentas">0</h3><p>Ventas</p></div><div class="card"><i class="fas fa-dollar-sign"></i><h3 id="ingresos">$0</h3><p>Ingresos</p></div><div class="card"><i class="fas fa-chart-line"></i><h3 id="stockBajo">0</h3><p>Stock bajo</p></div></div>
-    <h3>Últimas ventas</h3><table id="ventasTable"><thead><tr><th>Fecha</th><th>Cliente</th><th>Total</th></tr></thead><tbody id="ventasBody"></tbody></table>
+    <div class="stats">
+        <div class="card"><i class="fas fa-box"></i><h3 id="totalProductos">0</h3><p>Productos</p></div>
+        <div class="card"><i class="fas fa-shopping-cart"></i><h3 id="totalVentas">0</h3><p>Ventas</p></div>
+        <div class="card"><i class="fas fa-dollar-sign"></i><h3 id="ingresos">$0</h3><p>Ingresos</p></div>
+        <div class="card"><i class="fas fa-chart-line"></i><h3 id="stockBajo">0</h3><p>Stock bajo</p></div>
+    </div>
+    <h3>Últimas ventas</h3>
+    <table id="ventasTable"><thead><tr><th>Fecha</th><th>Cliente</th><th>Total</th></tr></thead><tbody id="ventasBody"></tbody></table>
+    <script src="../../db.js"></script>
     <script>
-        const productos = JSON.parse(localStorage.getItem('janq_productos')) || [];
-        const ventas = JSON.parse(localStorage.getItem('janq_ventas')) || [];
-        document.getElementById('totalProductos').textContent = productos.length;
-        document.getElementById('totalVentas').textContent = ventas.length;
-        document.getElementById('ingresos').textContent = '$' + ventas.reduce((s, v) => s + v.total, 0);
-        document.getElementById('stockBajo').textContent = productos.filter(p => p.stock < 5).length;
-        document.getElementById('ventasBody').innerHTML = ventas.slice(-10).reverse().map(v => `<tr><td>${new Date(v.fecha).toLocaleString()}</td><td>${v.cliente || 'Consumidor'}</td><td>$${v.total}</td></tr>`).join('');
-        function exportarCSV() { let csv = "Fecha,Cliente,Total\n" + ventas.map(v => `${new Date(v.fecha).toLocaleString()},${v.cliente || 'Consumidor'},${v.total}`).join('\n'); const blob = new Blob([csv], { type: 'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `janq_reportes_${new Date().toISOString().split('T')[0]}.csv`; a.click(); }
+        let companyId = null;
+        async function init() {
+            const company = JanQ.getCurrentCompany();
+            if (!company) {
+                window.location.href = '../../index.html';
+                return;
+            }
+            companyId = company.id;
+            await loadData();
+        }
+        async function loadData() {
+            const productos = await JanQ.getProductos(companyId);
+            const ventas = await JanQ.getVentas(companyId);
+            document.getElementById('totalProductos').textContent = productos.length;
+            document.getElementById('totalVentas').textContent = ventas.length;
+            document.getElementById('ingresos').textContent = '$' + ventas.reduce((s, v) => s + v.total, 0);
+            document.getElementById('stockBajo').textContent = productos.filter(p => p.stock < 5).length;
+            const ventasBody = document.getElementById('ventasBody');
+            if (ventas.length === 0) {
+                ventasBody.innerHTML = '<tr><td colspan="3">No hay ventas</td></tr>';
+                return;
+            }
+            ventasBody.innerHTML = ventas.slice(-10).reverse().map(v => `
+                <tr>
+                    <td>${new Date(v.fecha).toLocaleString()}</td>
+                    <td>${v.clienteNombre || 'Consumidor'}</td>
+                    <td>$${v.total}</td>
+                </tr>
+            `).join('');
+        }
+        function exportarCSV() {
+            // No implementado completamente, pero se puede hacer
+            alert('Función de exportación CSV en desarrollo');
+        }
+        init();
     </script>
 </body>
 </html>

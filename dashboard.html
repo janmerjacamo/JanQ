@@ -12,24 +12,74 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #F1F5F9; }
-        .header { background: #1E293B; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
-        .sidebar { width: 260px; background: white; height: calc(100vh - 70px); position: fixed; border-right: 1px solid #E2E8F0; padding: 20px; }
-        .nav-item { padding: 12px; margin: 4px 0; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+        .header {
+            background: #1E293B;
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar {
+            width: 260px;
+            background: white;
+            height: calc(100vh - 70px);
+            position: fixed;
+            border-right: 1px solid #E2E8F0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .nav-item {
+            padding: 12px;
+            margin: 4px 0;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
         .nav-item:hover { background: #F1F5F9; }
-        .content { margin-left: 280px; padding: 24px; }
-        iframe { width: 100%; height: calc(100vh - 100px); border: none; border-radius: 16px; background: white; }
+        .content {
+            margin-left: 280px;
+            padding: 24px;
+        }
+        iframe {
+            width: 100%;
+            height: calc(100vh - 100px);
+            border: none;
+            border-radius: 16px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
         .module-pane { display: none; }
         .module-pane.active { display: block; }
+        .logout-btn {
+            background: #EF4444;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <h2><i class="fas fa-chart-line"></i> JanQ ERP</h2>
-        <div><span id="userName"></span> | <span id="companyName"></span> | <button id="logoutBtn">Salir</button></div>
+        <div>
+            <span id="userName"></span> | <span id="companyName"></span>
+            <button class="logout-btn" id="logoutBtn">Salir</button>
+        </div>
     </div>
     <div class="sidebar" id="sidebar"></div>
     <div class="content">
-        <div id="module-dashboard" class="module-pane active">Bienvenido</div>
+        <div id="module-dashboard" class="module-pane active">
+            <div style="background:white; padding:30px; border-radius:20px; text-align:center;">
+                <i class="fas fa-chart-line" style="font-size:48px; color:#10B981;"></i>
+                <h2 style="margin:15px 0;">Bienvenido a JanQ</h2>
+                <p>Selecciona un módulo del menú lateral para comenzar</p>
+            </div>
+        </div>
         <div id="module-ventas" class="module-pane"><iframe src="modules/module-ventas/index.html"></iframe></div>
         <div id="module-inventario" class="module-pane"><iframe src="modules/module-inventario/index.html"></iframe></div>
         <div id="module-compras" class="module-pane"><iframe src="modules/module-compras/index.html"></iframe></div>
@@ -40,24 +90,31 @@
     </div>
     <script src="db.js"></script>
     <script>
-        const company = JanQ.getCurrentCompany();
         const user = JanQ.getCurrentUser();
-        if (!company || !user) window.location.href = 'index.html';
+        const company = JanQ.getCurrentCompany();
+        if (!user || !company) {
+            window.location.href = 'index.html';
+        }
         document.getElementById('userName').innerText = user.name;
         document.getElementById('companyName').innerText = company.name;
 
         const modules = [
-            { id: 'dashboard', name: 'Dashboard' },
-            { id: 'ventas', name: 'Punto de Venta' },
-            { id: 'inventario', name: 'Inventario' },
-            { id: 'compras', name: 'Compras' },
-            { id: 'clientes', name: 'Clientes' },
-            { id: 'proveedores', name: 'Proveedores' },
-            { id: 'caja', name: 'Arqueo de Caja' },
-            { id: 'reportes', name: 'Reportes' }
+            { id: 'dashboard', name: 'Dashboard', icon: 'fas fa-tachometer-alt' },
+            { id: 'ventas', name: 'Punto de Venta', icon: 'fas fa-shopping-cart' },
+            { id: 'inventario', name: 'Inventario', icon: 'fas fa-boxes' },
+            { id: 'compras', name: 'Compras', icon: 'fas fa-truck' },
+            { id: 'clientes', name: 'Clientes', icon: 'fas fa-users' },
+            { id: 'proveedores', name: 'Proveedores', icon: 'fas fa-building' },
+            { id: 'caja', name: 'Arqueo de Caja', icon: 'fas fa-cash-register' },
+            { id: 'reportes', name: 'Reportes', icon: 'fas fa-chart-bar' }
         ];
         const sidebar = document.getElementById('sidebar');
-        sidebar.innerHTML = modules.map(m => `<div class="nav-item" data-module="${m.id}">${m.name}</div>`).join('');
+        sidebar.innerHTML = modules.map(m => `
+            <div class="nav-item" data-module="${m.id}">
+                <i class="${m.icon}"></i>
+                <span>${m.name}</span>
+            </div>
+        `).join('');
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', () => {
                 const moduleId = item.dataset.module;
@@ -65,7 +122,10 @@
                 document.getElementById(`module-${moduleId}`).classList.add('active');
             });
         });
-        document.getElementById('logoutBtn').onclick = () => { JanQ.logoutUser(); };
+        document.getElementById('logoutBtn').onclick = () => {
+            JanQ.logoutUser();
+            window.location.href = 'index.html';
+        };
     </script>
 </body>
 </html>

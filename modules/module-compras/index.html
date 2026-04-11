@@ -2,270 +2,108 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JanQ - Compras</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: white; padding: 24px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 15px; }
-        .btn { background: #10B981; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-secondary { background: #64748B; }
-        .search-box { padding: 10px; border: 1px solid #E2E8F0; border-radius: 8px; width: 250px; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #E2E8F0; }
-        th { background: #1E293B; color: white; }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            padding: 24px;
-            border-radius: 16px;
-            width: 450px;
-            max-width: 90%;
-        }
-        .modal-content select, .modal-content input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #E2E8F0;
-            border-radius: 8px;
-        }
-        .loading {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid white;
-            border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 0.6s linear infinite;
-            margin-right: 8px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .stat-card {
-            background: #F8FAFC;
-            padding: 16px;
-            border-radius: 16px;
-            text-align: center;
-        }
-        .stat-card h3 { font-size: 28px; color: #10B981; }
+        body { font-family: 'Inter', sans-serif; padding: 20px; background: white; }
+        .btn { background: #10B981; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 12px; width: 400px; }
+        select, input { width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h2><i class="fas fa-truck"></i> Compras a Proveedores</h2>
-        <div>
-            <button class="btn" id="newPurchaseBtn"><i class="fas fa-plus"></i> Registrar Compra</button>
-        </div>
-    </div>
-
-    <div class="stats-grid">
-        <div class="stat-card"><i class="fas fa-shopping-cart"></i><h3 id="totalCompras">0</h3><p>Compras registradas</p></div>
-        <div class="stat-card"><i class="fas fa-box"></i><h3 id="totalProductos">0</h3><p>Productos actualizados</p></div>
-        <div class="stat-card"><i class="fas fa-building"></i><h3 id="totalProveedores">0</h3><p>Proveedores activos</p></div>
-    </div>
-
-    <div style="overflow-x: auto;">
-        <table id="comprasTable">
-            <thead><tr><th>Producto</th><th>Cantidad</th><th>Proveedor</th><th>Fecha</th><th>Total</th></tr></thead>
-            <tbody id="comprasBody"></tbody>
-        </table>
-    </div>
-
-    <!-- Modal para nueva compra -->
-    <div id="purchaseModal" class="modal">
+    <h2>Compras</h2>
+    <button class="btn" onclick="openModal()">+ Registrar Compra</button>
+    <table id="table">
+        <thead><tr><th>Producto</th><th>Cantidad</th><th>Proveedor</th><th>Fecha</th><th>Total</th></tr></thead>
+        <tbody id="tbody"></tbody>
+    </table>
+    <div id="modal" class="modal">
         <div class="modal-content">
-            <h3>Registrar Compra</h3>
+            <h3>Nueva Compra</h3>
             <select id="productoSelect"></select>
-            <input type="number" id="cantidad" placeholder="Cantidad" value="1" min="1">
+            <input type="number" id="cantidad" placeholder="Cantidad">
             <select id="proveedorSelect"></select>
-            <button class="btn" id="savePurchaseBtn" style="width:100%">Guardar Compra</button>
-            <button class="btn btn-secondary" id="closeModalBtn" style="width:100%; margin-top:10px">Cancelar</button>
-            <div id="purchaseFeedback" style="margin-top:10px; font-size:12px;"></div>
+            <button class="btn" onclick="saveCompra()">Guardar</button>
+            <button class="btn" style="background:#ccc;" onclick="closeModal()">Cancelar</button>
         </div>
     </div>
-
+    <script src="../../db.js"></script>
     <script>
-        // ==================== DATA (cargar una sola vez) ====================
+        let companyId = null;
         let productos = [];
         let proveedores = [];
         let compras = [];
-        
-        function loadData() {
-            productos = JSON.parse(localStorage.getItem('janq_productos')) || [];
-            proveedores = JSON.parse(localStorage.getItem('janq_proveedores')) || [];
-            compras = JSON.parse(localStorage.getItem('janq_compras')) || [];
-            updateStats();
-            renderCompras();
-        }
-        
-        function saveCompras() {
-            localStorage.setItem('janq_compras', JSON.stringify(compras));
-        }
-        
-        function saveProductos() {
-            localStorage.setItem('janq_productos', JSON.stringify(productos));
-        }
-        
-        function updateStats() {
-            document.getElementById('totalCompras').innerText = compras.length;
-            document.getElementById('totalProductos').innerText = productos.length;
-            document.getElementById('totalProveedores').innerText = proveedores.length;
-        }
-        
-        function renderCompras() {
-            const tbody = document.getElementById('comprasBody');
-            if (compras.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">No hay compras registradas</td></tr>';
+
+        async function init() {
+            const company = JanQ.getCurrentCompany();
+            if (!company) {
+                window.location.href = '../../index.html';
                 return;
             }
-            // Mostrar últimas 20 compras primero
-            const lastCompras = [...compras].reverse().slice(0, 50);
-            tbody.innerHTML = lastCompras.map(c => `
+            companyId = company.id;
+            await loadData();
+        }
+        async function loadData() {
+            productos = await JanQ.getProductos(companyId);
+            proveedores = await JanQ.getProveedores(companyId);
+            compras = await JanQ.getCompras(companyId);
+            renderCompras();
+        }
+        function renderCompras() {
+            const tbody = document.getElementById('tbody');
+            if (compras.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">No hay compras</td></tr>';
+                return;
+            }
+            tbody.innerHTML = compras.map(c => `
                 <tr>
-                    <td>${escapeHtml(c.productoNombre)}</td>
+                    <td>${c.productoNombre}</td>
                     <td>${c.cantidad}</td>
-                    <td>${escapeHtml(c.proveedorNombre)}</td>
+                    <td>${c.proveedorNombre}</td>
                     <td>${new Date(c.fecha).toLocaleDateString()}</td>
-                    <td>$${c.total.toFixed(2)}</td>
+                    <td>$${c.total}</td>
                 </tr>
             `).join('');
         }
-        
-        // ==================== REGISTRAR COMPRA ====================
-        function openPurchaseModal() {
-            // Llenar selects con datos actuales
-            const productSelect = document.getElementById('productoSelect');
-            const proveedorSelect = document.getElementById('proveedorSelect');
-            productSelect.innerHTML = '<option value="">Seleccione producto</option>' + 
-                productos.map(p => `<option value="${p.id}" data-precio="${p.precioCompra || p.precioVenta || 0}">${escapeHtml(p.nombre)} - Stock: ${p.stock}</option>`).join('');
-            proveedorSelect.innerHTML = '<option value="">Seleccione proveedor</option>' + 
-                proveedores.map(p => `<option value="${p.id}">${escapeHtml(p.nombre)}</option>`).join('');
-            document.getElementById('cantidad').value = '1';
-            document.getElementById('purchaseFeedback').innerHTML = '';
-            document.getElementById('purchaseModal').style.display = 'flex';
+        function openModal() {
+            document.getElementById('productoSelect').innerHTML = productos.map(p => `<option value="${p.id}">${p.nombre} - Stock: ${p.stock}</option>`).join('');
+            document.getElementById('proveedorSelect').innerHTML = proveedores.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+            document.getElementById('modal').style.display = 'flex';
         }
-        
-        function closeModal() {
-            document.getElementById('purchaseModal').style.display = 'none';
-        }
-        
-        async function savePurchase() {
-            const productId = parseInt(document.getElementById('productoSelect').value);
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+        async function saveCompra() {
+            const productoId = document.getElementById('productoSelect').value;
             const cantidad = parseInt(document.getElementById('cantidad').value);
-            const proveedorId = parseInt(document.getElementById('proveedorSelect').value);
-            
-            if (!productId || !cantidad || !proveedorId) {
-                document.getElementById('purchaseFeedback').innerHTML = '<span style="color:#DC2626">Complete todos los campos</span>';
-                return;
-            }
-            
-            const producto = productos.find(p => p.id === productId);
+            const proveedorId = document.getElementById('proveedorSelect').value;
+            if (!productoId || !cantidad || !proveedorId) return;
+            const producto = productos.find(p => p.id === productoId);
             const proveedor = proveedores.find(p => p.id === proveedorId);
             if (!producto || !proveedor) return;
-            
-            const precioUnitario = producto.precioCompra || producto.precioVenta || 0;
-            const total = precioUnitario * cantidad;
-            
-            // Mostrar loading en el botón
-            const saveBtn = document.getElementById('savePurchaseBtn');
-            const originalText = saveBtn.innerHTML;
-            saveBtn.innerHTML = '<span class="loading"></span> Guardando...';
-            saveBtn.disabled = true;
-            
-            // Simular pequeño retraso para UI (pero rápido)
-            setTimeout(() => {
-                // Actualizar stock del producto
-                producto.stock = (producto.stock || 0) + cantidad;
-                saveProductos();
-                
-                // Registrar movimiento en kardex
-                let movimientos = JSON.parse(localStorage.getItem('janq_movimientos')) || [];
-                movimientos.push({
-                    id: Date.now(),
-                    productoId: producto.id,
-                    productoNombre: producto.nombre,
-                    tipo: 'entrada',
-                    entrada: cantidad,
-                    salida: 0,
-                    stockActual: producto.stock,
-                    referencia: `Compra a ${proveedor.nombre}`,
-                    fecha: new Date().toISOString()
-                });
-                localStorage.setItem('janq_movimientos', JSON.stringify(movimientos));
-                
-                // Registrar compra
-                const nuevaCompra = {
-                    id: Date.now(),
-                    productoId: productId,
-                    productoNombre: producto.nombre,
-                    cantidad: cantidad,
-                    proveedorId: proveedorId,
-                    proveedorNombre: proveedor.nombre,
-                    fecha: new Date().toISOString(),
-                    total: total
-                };
-                compras.push(nuevaCompra);
-                saveCompras();
-                
-                // Actualizar UI
-                renderCompras();
-                updateStats();
-                
-                // Cerrar modal y mostrar feedback
-                closeModal();
-                document.getElementById('purchaseFeedback').innerHTML = '<span style="color:#10B981">✅ Compra registrada correctamente</span>';
-                setTimeout(() => {
-                    document.getElementById('purchaseFeedback').innerHTML = '';
-                }, 2000);
-                
-                // Actualizar dashboard principal si existe
-                if (window.parent && window.parent.loadStats) window.parent.loadStats();
-                
-                saveBtn.innerHTML = originalText;
-                saveBtn.disabled = false;
-            }, 50); // Pequeño delay para mostrar el loading, pero casi instantáneo
-        }
-        
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
+            const total = (producto.precio || 0) * cantidad;
+            // Actualizar stock
+            producto.stock += cantidad;
+            await JanQ.updateProducto(companyId, productoId, { stock: producto.stock });
+            // Registrar compra
+            const nuevaCompra = {
+                productoId, productoNombre: producto.nombre, cantidad, proveedorId, proveedorNombre: proveedor.nombre, total,
+                fecha: new Date().toISOString()
+            };
+            await JanQ.addCompra(companyId, nuevaCompra);
+            // Movimiento kardex
+            await JanQ.addMovimiento(companyId, {
+                productoId, productoNombre: producto.nombre, tipo: 'entrada', entrada: cantidad, salida: 0,
+                stockActual: producto.stock, referencia: `Compra a ${proveedor.nombre}`
             });
+            await loadData();
+            closeModal();
+            alert('Compra registrada');
+            if (window.parent && window.parent.loadStats) window.parent.loadStats();
         }
-        
-        // ==================== EVENTOS ====================
-        document.getElementById('newPurchaseBtn').addEventListener('click', openPurchaseModal);
-        document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-        document.getElementById('savePurchaseBtn').addEventListener('click', savePurchase);
-        
-        // Cargar datos al iniciar
-        loadData();
-        
-        // Recargar datos si cambian desde otro lugar (opcional)
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'janq_productos' || e.key === 'janq_proveedores' || e.key === 'janq_compras') {
-                loadData();
-            }
-        });
+        init();
     </script>
 </body>
 </html>
