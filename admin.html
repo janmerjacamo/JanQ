@@ -83,9 +83,9 @@
     <div id="userModal" class="modal">
         <div class="modal-content">
             <h3>Nuevo Usuario</h3>
-            <input type="email" id="userEmail" placeholder="Email">
+            <input type="email" id="userEmail" placeholder="Email" autocomplete="off">
             <input type="text" id="userName" placeholder="Nombre">
-            <input type="password" id="userPassword" placeholder="Contraseña">
+            <input type="password" id="userPassword" placeholder="Contraseña" autocomplete="new-password">
             <select id="userCompany"></select>
             <select id="userRole">
                 <option value="user">Usuario</option>
@@ -111,7 +111,6 @@
                     <td><button onclick="deleteCompany('${c.id}')">Eliminar</button></td>
                 </tr>
             `).join('');
-            // Actualizar select de empresas en modal usuario
             const select = document.getElementById('userCompany');
             select.innerHTML = companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
         }
@@ -141,6 +140,7 @@
         async function deleteUser(uid) {
             if (confirm('¿Eliminar usuario?')) {
                 await JanQ.db.collection('users').doc(uid).delete();
+                // Nota: Esto no elimina el usuario de Authentication, solo de Firestore. Para eliminarlo también de Auth, se necesita función adicional.
                 loadUsers();
             }
         }
@@ -171,10 +171,18 @@
             const name = document.getElementById('userName').value;
             const companyId = document.getElementById('userCompany').value;
             const role = document.getElementById('userRole').value;
-            if (!email || !password || !name || !companyId) return;
-            await JanQ.registerUser(email, password, name, companyId, role);
-            document.getElementById('userModal').style.display = 'none';
-            loadUsers();
+            if (!email || !password || !name || !companyId) {
+                alert('Complete todos los campos');
+                return;
+            }
+            const result = await JanQ.registerUser(email, password, name, companyId, role);
+            if (result.success) {
+                alert('Usuario creado correctamente');
+                document.getElementById('userModal').style.display = 'none';
+                loadUsers();
+            } else {
+                alert('Error: ' + result.error);
+            }
         };
         document.getElementById('logoutBtn').onclick = () => {
             JanQ.logoutUser();
